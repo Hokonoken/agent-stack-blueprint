@@ -13,4 +13,6 @@ Everything here is a reading of code and documents at the dates stated in each a
 
 Independent work. Product names belong to their owners. Views are the author's own and do not represent the position of their employer.
 
+Text and diagrams are CC BY 4.0 (see LICENSE.md); quoted code and documents stay under their own licences.
+
 Static site, no build step: every page is a self-contained HTML file. Served with GitHub Pages from the `main` branch.
