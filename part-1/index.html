@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Part 1 of the open agent stack blueprint: AI agents on OpenShift: the open blueprint, layer by layer.">
+<title>OpenShift Agents Blueprint</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --ink:#131A24; --muted:#5A6675; --line:#D5DBE3; --band:#E9EDF3;
+  --rh:#B42318; --nv:#3F7D0B; --ms:#175CD3; --oss:#5A6675; --hot:#C2410C;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1117; --surface:#151B24; --ink:#E6EBF2; --muted:#94A1B2; --line:#2A3340; --band:#1A222D;
+    --rh:#F97066; --nv:#86CB3C; --ms:#84ADFF; --oss:#94A1B2; --hot:#FB923C;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1117; --surface:#151B24; --ink:#E6EBF2; --muted:#94A1B2; --line:#2A3340; --band:#1A222D;
+  --rh:#F97066; --nv:#86CB3C; --ms:#84ADFF; --oss:#94A1B2; --hot:#FB923C;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.55;padding-inline:20px;padding-block:32px 56px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4.6vw,44px);font-weight:700;line-height:1.06;letter-spacing:-.01em}
+h2{font-size:23px;font-weight:600}
+h3{font-size:17px;font-weight:600}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{max-width:70ch;color:var(--muted);margin:0}
+header{display:flex;flex-direction:column;gap:12px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:13px;color:var(--muted);padding:12px 0;border-block:1px solid var(--line)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{display:inline-block;width:22px;height:12px;border:2px solid var(--oss);background:var(--surface)}
+.sw.rh{border-color:var(--rh)} .sw.nv{border-color:var(--nv)} .sw.ms{border-color:var(--ms);border-style:dashed}
+figure{margin:0;display:flex;flex-direction:column;gap:12px}
+.svgbox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);padding:10px}
+svg{display:block;min-width:1040px;width:100%;height:auto;color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif}
+svg .b rect{fill:var(--surface);stroke:var(--oss);stroke-width:1.4}
+svg .rh rect{stroke:var(--rh)} svg .nv rect{stroke:var(--nv)}
+svg .ms rect{stroke:var(--ms);stroke-dasharray:6 3}
+svg .t{font-size:13px;font-weight:600;fill:currentColor}
+svg .s{font-size:10.5px;fill:var(--muted)}
+svg .tag{font-size:9px;letter-spacing:.06em;font-family:"IBM Plex Mono",ui-monospace,monospace}
+svg .trh{fill:var(--rh)} svg .tnv{fill:var(--nv)} svg .tms{fill:var(--ms)} svg .toss{fill:var(--oss)}
+svg .frame{fill:var(--band);stroke:var(--line);stroke-width:1}
+svg .pod{fill:none;stroke:var(--nv);stroke-width:1.6;stroke-dasharray:7 4}
+svg .agt{fill:none;stroke:var(--ms);stroke-width:1.4;stroke-dasharray:6 3}
+svg .cap{font-size:10.5px;letter-spacing:.07em;font-weight:600}
+svg .lbl{font-size:10.5px;fill:var(--muted)}
+svg .flow{fill:none;stroke:currentColor;stroke-width:1.3}
+svg .msflow{fill:none;stroke:var(--ms);stroke-width:1.4;stroke-dasharray:5 3}
+svg .tr{fill:none;stroke:var(--muted);stroke-width:1.1;stroke-dasharray:2 4}
+svg .mfill{fill:var(--ms)} svg .tfill{fill:var(--muted)}
+svg .bar rect{fill:var(--band);stroke:var(--line)}
+svg .mat{font-size:9px;font-style:italic;fill:var(--muted)}
+svg .svc{fill:none;stroke:var(--line);stroke-width:1.6;stroke-dasharray:3 3}
+svg .hotn rect{fill:var(--surface);stroke:var(--hot);stroke-width:2.4}
+figcaption a{color:var(--hot)}
+svg a{cursor:pointer}
+.tblbox{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:800px;font-size:13.5px}
+th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:10px;border-bottom:1px solid var(--line);background:var(--band)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td:first-child{font-weight:600;white-space:nowrap}
+td code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+svg .blue rect{fill:var(--surface);stroke:var(--ms);stroke-width:1.8}
+svg .green rect{fill:var(--surface);stroke:var(--nv);stroke-width:1.8}
+svg .tblue{fill:var(--ms)} svg .tgreen{fill:var(--nv)}
+svg .wflow{fill:none;stroke:var(--nv);stroke-width:2.2}
+svg .wflow2{fill:none;stroke:var(--ms);stroke-width:2.2}
+svg .shadow{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3}
+svg .gate rect{fill:var(--band);stroke:var(--hot);stroke-width:1.6}
+svg .hott{fill:var(--hot)}
+.sw.hot{border-color:var(--hot);border-width:3px}
+svg .ghost rect{fill:var(--surface);stroke:var(--muted);stroke-width:1.2;stroke-dasharray:5 3}
+figcaption{max-width:78ch;color:var(--muted);font-size:14px}
+ol.steps{margin:0;padding-left:22px;max-width:78ch;display:flex;flex-direction:column;gap:8px}
+ol.steps li::marker{font-family:"IBM Plex Mono",ui-monospace,monospace;color:var(--muted)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));border:1px solid var(--line);background:var(--surface)}
+.col{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.col h3{display:flex;align-items:center;gap:10px}
+.col ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.col code,.q code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;overflow-wrap:anywhere}
+.q{border-left:3px solid var(--rh);padding:6px 14px;max-width:78ch;display:flex;flex-direction:column;gap:6px}
+.q blockquote{margin:0;font-size:16px}
+.q span{font-size:13px;color:var(--muted)}
+footer{font-size:12.5px;color:var(--muted);max-width:88ch}
+section{display:flex;flex-direction:column;gap:14px}
+
+.post{max-width:76ch;margin:0 auto;display:flex;flex-direction:column;gap:22px;font-size:16.5px;line-height:1.6}
+.post h1{font-size:clamp(30px,5vw,46px)}
+.post h2{margin-top:10px}
+.post p{margin:0}
+.post ul,.post ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.meta{font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+.kicker{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--rh)}
+.takeaways{border:1px solid var(--line);background:var(--surface);padding:18px 22px;display:flex;flex-direction:column;gap:10px}
+.takeaways h3{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.takeaways ol{font-size:15.5px}
+.quote{border-left:3px solid var(--rh);padding:8px 18px;display:flex;flex-direction:column;gap:8px}
+.quote blockquote{margin:0;font-size:18px;font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;font-weight:500}
+.quote span{font-size:13.5px;color:var(--muted)}
+.cta{border:2px solid var(--hot);padding:18px 22px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.cta strong{color:var(--hot)}
+.series{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:15.5px}
+.series li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:baseline}
+.series li span a{color:inherit;text-decoration:none}
+.series li span a:hover{text-decoration:underline}
+.series li span{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--hot);white-space:nowrap}
+.fig{display:flex;flex-direction:column;gap:10px}
+.fig .svgbox{padding:8px}
+.fig figcaption{font-size:13.5px}
+.wide{max-width:1280px;margin:0 auto;width:100%}
+.sources{font-size:13.5px;color:var(--muted)}
+.sources ol{gap:4px}
+.sources a{color:inherit}
+hr{border:0;border-top:1px solid var(--line);margin:8px 0}
+.notice{font-size:13.5px;color:var(--muted);border:1px dashed var(--line);padding:10px 14px}
+.sn{max-width:76ch;margin:0 auto 18px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.04em;color:var(--muted)}
+.sn a{color:var(--us);text-decoration:none}
+.sn a:hover,.sn a:focus-visible{text-decoration:underline;outline:none}
+body{margin:0}
+</style>
+</head>
+<body>
+<nav class="sn"><span></span><a href="../">All six parts</a><a href="../part-2/">Part 2 &rarr;</a></nav>
+<div class="post">
+  <span class="kicker">Blueprint · part 1 of 6 · draft for review</span>
+  <h1>AI agents on OpenShift: the open blueprint, layer by layer</h1>
+  <p class="lede">Red Hat published its reference architecture for cloud-native AI agents in July 2026. I read it, then read the code of the projects it names. Here is the whole stack on one page, from the GPU to the user, and the two gaps Red Hat itself says are still open.</p>
+  <div class="meta"><span>Draft · September 2026</span><span>Reading time: 6 min</span><span>Views are my own, not my employer's</span></div>
+
+  <div class="takeaways">
+    <h3>Three things to take away</h3>
+    <ol>
+      <li>An agent has <strong>two exits</strong>, and each has its own gateway: tool calls go through an MCP gateway, inference goes through a model gateway. Governance lives at those two doors, not inside the model.</li>
+      <li>Red Hat governs by <strong>identity and tool authorization</strong>, never by reading the prompt. A prompt injection that makes the model call a forbidden tool fails at the infrastructure layer, because the model was never the one deciding.</li>
+      <li>The blueprint states what it does not solve yet: <strong>human approval of high-risk actions</strong> and <strong>policy authoring at fleet scale</strong>. Those two sentences are the most useful part of the document.</li>
+    </ol>
+  </div>
+
+  <h2>Why a map</h2>
+  <p>Every vendor now ships "agentic AI". What is hard to find is a picture of how the pieces fit when you actually have to run them: which component holds the agent's identity, which one decides whether a tool call goes through, where the model lives, what emits the audit trail. Red Hat's blueprint is the first one I have seen that answers those questions with named, open projects. So I drew it.</p>
+  <p>Everything below comes from public sources: the blueprint article, Red Hat's article on the OpenShift AI dashboard, and the source code of the projects on GitHub. Where a component's behaviour is only described in documentation and not visible in code, I say so.</p>
+</div>
+
+<figure class="fig wide">
+  <div class="svgbox">
+  <svg viewBox="0 0 1280 930" role="img" aria-label="Corrected agentic architecture: two execution patterns side by side, Agent-as-a-Workload in an OpenShell sandbox and Agent-as-a-Service on a shared OGX server, with the control band on the left, tool calls to the MCP gateway at the top right, inference to the model gateway, guardrails, llm-d routing and vLLM at the bottom right, the vector store, and maturity labels on every component.">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker><marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mfill" d="M0 0 L10 5 L0 10 z"/></marker><marker id="at" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="tfill" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+<g class="b "><rect x="260" y="20" width="1000" height="50"/><text class="t" x="760.0" y="44" text-anchor="middle">Users · business applications · notebooks and IDEs</text></g>
+<g class="b rh"><rect x="260" y="100" width="340" height="60"/><text class="t" x="430.0" y="124" text-anchor="middle">Ingress gateway</text><text class="s" x="430.0" y="142" text-anchor="middle">Gateway API · Envoy (Kuadrant)</text><text class="tag trh" x="592" y="153" text-anchor="end">RED HAT</text><text class="mat" x="268" y="153">GA</text></g>
+<g class="b "><rect x="660" y="100" width="190" height="60"/><text class="t" x="755.0" y="124" text-anchor="middle">Keycloak</text><text class="s" x="755.0" y="142" text-anchor="middle">OIDC, JWT</text><text class="tag toss" x="842" y="153" text-anchor="end">CNCF</text></g>
+<g class="b rh"><rect x="870" y="100" width="190" height="60"/><text class="t" x="965.0" y="124" text-anchor="middle">Authorino</text><text class="s" x="965.0" y="142" text-anchor="middle">ext_authz · server + tool</text><text class="tag trh" x="1052" y="153" text-anchor="end">RED HAT</text><text class="mat" x="878" y="153">GA</text></g>
+<g class="b rh"><rect x="1080" y="100" width="180" height="60"/><text class="t" x="1170.0" y="124" text-anchor="middle">Limitador</text><text class="s" x="1170.0" y="142" text-anchor="middle">token quotas</text><text class="tag trh" x="1252" y="153" text-anchor="end">RED HAT</text><text class="mat" x="1088" y="153">GA</text></g>
+<rect class="frame" x="20" y="200" width="210" height="440"/>
+<text class="cap" x="125" y="220" text-anchor="middle" fill="currentColor">CONTROL BAND</text>
+<g class="b rh"><rect x="32" y="230" width="186" height="54"/><text class="t" x="44" y="250">GitOps · Helm</text><text class="s" x="44" y="265">declarative deployment</text><text class="tag trh" x="210" y="278" text-anchor="end">RH</text><text class="mat" x="44" y="278">GA</text></g>
+<g class="b rh"><rect x="32" y="288" width="186" height="54"/><text class="t" x="44" y="308">OGX Operator</text><text class="s" x="44" y="323">agents as a shared service</text><text class="tag trh" x="210" y="336" text-anchor="end">RH</text><text class="mat" x="44" y="336">3.5 early access</text></g>
+<g class="b nv"><rect x="32" y="346" width="186" height="54"/><text class="t" x="44" y="366">NemoClaw</text><text class="s" x="44" y="381">agent-in-pod blueprint</text><text class="tag tnv" x="210" y="394" text-anchor="end">NVIDIA</text><text class="mat" x="44" y="394">pre-1.0</text></g>
+<g class="b nv"><rect x="32" y="404" width="186" height="54"/><text class="t" x="44" y="424">OpenShell</text><text class="s" x="44" y="439">policies, drafts, prover</text><text class="tag tnv" x="210" y="452" text-anchor="end">NVIDIA</text><text class="mat" x="44" y="452">dev preview</text></g>
+<g class="b "><rect x="32" y="462" width="186" height="54"/><text class="t" x="44" y="482">Agent Sandbox</text><text class="s" x="44" y="497">SIG Apps controller</text><text class="tag toss" x="210" y="510" text-anchor="end">K8S</text><text class="mat" x="44" y="510">alpha</text></g>
+<g class="b "><rect x="32" y="520" width="186" height="54"/><text class="t" x="44" y="540">SPIFFE / SPIRE</text><text class="s" x="44" y="555">workload identity</text><text class="tag toss" x="210" y="568" text-anchor="end">CNCF</text><text class="mat" x="44" y="568">CNCF graduated</text></g>
+<g class="b rh"><rect x="32" y="578" width="186" height="54"/><text class="t" x="44" y="598">Rossoctl (ex-Kagenti)</text><text class="s" x="44" y="613">research, not in blueprint</text><text class="tag trh" x="210" y="626" text-anchor="end">RH</text></g>
+<rect class="pod" x="260" y="200" width="340" height="210"/>
+<text class="cap tnv" x="430" y="220" text-anchor="middle">PATTERN A · AGENT-AS-A-WORKLOAD · ONE POD PER AGENT</text>
+<text class="lbl" x="430" y="236" text-anchor="middle">OpenShell sandbox (NemoClaw): Landlock, seccomp, netns</text>
+<g class="b "><rect x="280" y="246" width="300" height="46"/><text class="t" x="430.0" y="270" text-anchor="middle">Harness + MCP clients</text><text class="s" x="430.0" y="288" text-anchor="middle">LangGraph · Deep Agents · NeMo Agent Toolkit</text></g>
+<g class="b nv"><rect x="280" y="300" width="300" height="46"/><text class="t" x="430.0" y="324" text-anchor="middle">OpenShell supervisor</text><text class="s" x="430.0" y="342" text-anchor="middle">Rego policy · Privacy Router: where inference goes</text><text class="tag tnv" x="572" y="313" text-anchor="end">NVIDIA</text></g>
+<g class="b ms"><rect x="280" y="354" width="300" height="46"/><text class="t" x="430.0" y="378" text-anchor="middle">AGT · SDK or sidecar</text><text class="s" x="430.0" y="396" text-anchor="middle">per-action policy, declared intent</text><text class="tag tms" x="572" y="367" text-anchor="end">MS</text></g>
+<rect class="svc" x="260" y="430" width="340" height="230"/>
+<text class="cap trh" x="430" y="450" text-anchor="middle">PATTERN B · AGENT-AS-A-SERVICE · SHARED RUNTIME</text>
+<text class="lbl" x="430" y="466" text-anchor="middle">what OpenShift AI 3.5 ships</text>
+<g class="b rh"><rect x="280" y="476" width="300" height="62"/><text class="t" x="430.0" y="500" text-anchor="middle">OGX server</text><text class="s" x="430.0" y="518" text-anchor="middle">ex-Llama Stack · Responses API · tools · Vector_IO</text><text class="s" x="430.0" y="534" text-anchor="middle">OAuth, ABAC, multi-tenant</text><text class="tag trh" x="572" y="489" text-anchor="end">RED HAT</text><text class="mat" x="288" y="489">3.5 early access</text></g>
+<g class="b nv"><rect x="280" y="546" width="300" height="48"/><text class="t" x="430.0" y="570" text-anchor="middle">Containers API → OpenShell</text><text class="s" x="430.0" y="588" text-anchor="middle">early validation, not shipping (Red Hat, 05.2026)</text><text class="tag tnv" x="572" y="559" text-anchor="end">NVIDIA</text></g>
+<g class="b ms"><rect x="280" y="602" width="300" height="48"/><text class="t" x="430.0" y="626" text-anchor="middle">AGT · server sidecar</text><text class="s" x="430.0" y="644" text-anchor="middle">same policies as pattern A</text><text class="tag tms" x="572" y="615" text-anchor="end">MS</text></g>
+<g class="b rh"><rect x="660" y="200" width="200" height="60"/><text class="t" x="760.0" y="224" text-anchor="middle">MCP gateway</text><text class="s" x="760.0" y="242" text-anchor="middle">Kuadrant · Envoy ext_proc + broker</text><text class="tag trh" x="852" y="253" text-anchor="end">RED HAT</text><text class="mat" x="668" y="253">Tech Preview</text></g>
+<g class="b "><rect x="900" y="200" width="180" height="60"/><text class="t" x="990.0" y="224" text-anchor="middle">MCP servers</text><text class="s" x="990.0" y="242" text-anchor="middle">MCP catalog</text><text class="mat" x="908" y="253">dev preview</text></g>
+<g class="b "><rect x="1110" y="200" width="150" height="60"/><text class="t" x="1185.0" y="224" text-anchor="middle">Business systems</text><text class="s" x="1185.0" y="242" text-anchor="middle">APIs, data</text></g>
+<rect class="agt" x="660" y="300" width="600" height="100"/>
+<text class="cap tms" x="672" y="319">AGT · ACTION GOVERNANCE (Microsoft, MIT) · proposed insertion, not in the blueprint</text>
+<g class="b ms"><rect x="672" y="330" width="138" height="56"/><text class="t" x="741.0" y="354" text-anchor="middle">Policy</text><text class="s" x="741.0" y="372" text-anchor="middle">Cedar · Rego</text></g>
+<g class="b ms"><rect x="820" y="330" width="138" height="56"/><text class="t" x="889.0" y="354" text-anchor="middle">Intent</text><text class="s" x="889.0" y="372" text-anchor="middle">mission, drift</text></g>
+<g class="b ms"><rect x="968" y="330" width="138" height="56"/><text class="t" x="1037.0" y="354" text-anchor="middle">Approval</text><text class="s" x="1037.0" y="372" text-anchor="middle">webhook, elicitation</text></g>
+<g class="b ms"><rect x="1116" y="330" width="138" height="56"/><text class="t" x="1185.0" y="354" text-anchor="middle">Audit</text><text class="s" x="1185.0" y="372" text-anchor="middle">Merkle tree</text></g>
+<g class="b rh"><rect x="660" y="430" width="200" height="60"/><text class="t" x="760.0" y="454" text-anchor="middle">MaaS</text><text class="s" x="760.0" y="472" text-anchor="middle">keys, quotas · Authorino</text><text class="tag trh" x="852" y="483" text-anchor="end">RED HAT</text><text class="mat" x="668" y="483">GA</text></g>
+<g class="b rh"><rect x="900" y="430" width="180" height="60"/><text class="t" x="990.0" y="454" text-anchor="middle">Guardrails</text><text class="s" x="990.0" y="472" text-anchor="middle">TrustyAI · NeMo Guardrails</text><text class="tag trh" x="1072" y="483" text-anchor="end">RH + NVIDIA</text></g>
+<g class="b rh"><rect x="1110" y="430" width="150" height="60"/><text class="t" x="1185.0" y="454" text-anchor="middle">llm-d routing</text><text class="s" x="1185.0" y="472" text-anchor="middle">no model runs here</text><text class="tag trh" x="1252" y="483" text-anchor="end">RH</text><text class="mat" x="1118" y="483">3.5</text></g>
+<g class="b rh"><rect x="660" y="524" width="200" height="60"/><text class="t" x="760.0" y="548" text-anchor="middle">Vector store</text><text class="s" x="760.0" y="566" text-anchor="middle">Milvus · pgvector · Qdrant</text><text class="tag trh" x="852" y="577" text-anchor="end">RH</text><text class="mat" x="668" y="577">GA</text></g>
+<g class="b rh"><rect x="900" y="524" width="180" height="60"/><text class="t" x="990.0" y="548" text-anchor="middle">Registry, catalog</text><text class="s" x="990.0" y="566" text-anchor="middle">of models</text><text class="tag trh" x="1072" y="577" text-anchor="end">RH</text><text class="mat" x="908" y="577">GA</text></g>
+<g class="b rh"><rect x="1110" y="524" width="150" height="60"/><text class="t" x="1185.0" y="548" text-anchor="middle">vLLM · the engine</text><text class="s" x="1185.0" y="566" text-anchor="middle">KServe; NIM optional</text><text class="tag trh" x="1252" y="577" text-anchor="end">RH + NVIDIA</text><text class="mat" x="1118" y="577">GA</text></g>
+<g class="flow">
+<line x1="430" y1="70" x2="430" y2="98" marker-end="url(#a)"/>
+<line x1="430" y1="160" x2="430" y2="198" marker-end="url(#a)"/>
+<polyline points="300,160 300,182 245,182 245,292" /><path d="M245,292 a8,8 0 0 1 0,16" fill="none"/><polyline points="245,308 245,470 258,470" marker-end="url(#a)"/>
+<line x1="600" y1="130" x2="658" y2="130" marker-end="url(#a)"/>
+<line x1="230" y1="300" x2="258" y2="300" marker-end="url(#a)"/>
+<line x1="230" y1="520" x2="258" y2="520" marker-end="url(#a)"/>
+<polyline points="600,250 625,250 625,520 600,520"/>
+<line x1="625" y1="250" x2="658" y2="250" marker-end="url(#a)"/>
+<polyline points="600,330 618,330"/><path d="M618,330 a7,7 0 0 1 14,0" fill="none"/><polyline points="632,330 645,330 645,460 658,460" marker-end="url(#a)"/>
+<polyline points="600,500 618,500"/><path d="M618,500 a7,7 0 0 1 14,0" fill="none"/><polyline points="632,500 645,500 645,460"/>
+<line x1="860" y1="230" x2="898" y2="230" marker-end="url(#a)"/><line x1="1080" y1="230" x2="1108" y2="230" marker-end="url(#a)"/>
+<polyline points="760,200 760,180 965,180 965,162" marker-end="url(#a)"/>
+<line x1="860" y1="460" x2="898" y2="460" marker-end="url(#a)"/><line x1="1080" y1="460" x2="1108" y2="460" marker-end="url(#a)"/><line x1="1185" y1="490" x2="1185" y2="522" marker-end="url(#a)"/>
+<line x1="760" y1="490" x2="760" y2="522" marker-end="url(#a)"/>
+</g>
+<g class="msflow"><line x1="741" y1="260" x2="741" y2="298" marker-end="url(#am)"/><polyline points="580,382 612,382 612,350 658,350" marker-end="url(#am)"/><polyline points="580,626 652,626 652,467"/><path d="M652,467 a7,7 0 0 1 0,-14" fill="none"/><polyline points="652,453 652,402" marker-end="url(#am)"/></g>
+<g class="tr"><line x1="430" y1="660" x2="430" y2="698" marker-end="url(#at)"/><line x1="1185" y1="584" x2="1185" y2="698" marker-end="url(#at)"/></g>
+<text class="lbl" x="440" y="89">OIDC or API key</text>
+<text class="lbl" x="440" y="184">direct request to the agent</text>
+<text class="lbl" x="250" y="176" text-anchor="end">Responses API</text>
+<text class="lbl" x="629" y="123" text-anchor="middle">JWT</text>
+<text class="lbl" x="862" y="174" text-anchor="middle">allowed? (server + tool)</text>
+<text class="lbl tms" x="750" y="284">tool name + arguments</text>
+<text class="lbl" x="770" y="510">RAG</text>
+<text class="lbl" x="440" y="676">OTLP traces</text>
+<g class="bar"><rect x="20" y="700" width="1240" height="56"/><text class="cap" x="36" y="723" fill="currentColor">OBSERVABILITY</text><text class="s" x="36" y="742">OpenTelemetry Collector → MLflow Tracing · Tempo · Prometheus + DCGM · OpenShell OCSF events · MCP gateway "tool call" log</text></g>
+<g class="bar"><rect x="20" y="770" width="1240" height="56"/><text class="cap" x="36" y="793" fill="currentColor">PLATFORM</text><text class="s" x="36" y="812">Red Hat OpenShift · RHCOS · OVN-Kubernetes · GPU Operator and Network Operator (NVIDIA) · Node Feature Discovery · Kueue · ODF storage</text></g>
+<g class="bar"><rect x="20" y="840" width="1240" height="56"/><text class="cap" x="36" y="863" fill="currentColor">HARDWARE</text><text class="s" x="36" y="882">NVIDIA GPUs; also AMD and Intel Gaudi · RoCE, InfiniBand · NVMe · on-premises, sovereign or cloud</text></g>
+<text class="lbl" x="640" y="920" text-anchor="middle">Maturity at the bottom of each box, as published by the vendor in September 2026; the inference chain is linearized: KServe drives llm-d, the guardrails are a called service.</text>
+</svg>
+  </div>
+  <figcaption>The stack, top to bottom: users and the ingress gateway; the control band that deploys and confines agents; the two execution patterns, an agent in its own OpenShell-confined pod (the NemoClaw path) and the shared OGX server behind a Responses API (what OpenShift AI 3.5 ships); the two exits, tools on the right top, inference on the right bottom; observability, platform and hardware. Every box carries its maturity as the vendor publishes it. Red is Red Hat, green is NVIDIA, grey is community. The dashed blue block is not in the blueprint: it is where I would plug an action-governance toolkit, and part 4 of this series is about it.</figcaption>
+</figure>
+
+<div class="post">
+  <h2>The path of one request</h2>
+  <ol>
+    <li>A user or an application authenticates with <strong>Keycloak</strong> and reaches the ingress gateway with a token or an API key.</li>
+    <li>The request reaches the agent through one of two patterns. <strong>Pattern A, Agent-as-a-Workload</strong>: an agent in its own pod, confined by <strong>OpenShell</strong>, NVIDIA's sandbox (Landlock, seccomp, network namespaces, a Rego policy the agent may propose to change but cannot change alone); this is the NemoClaw path. <strong>Pattern B, Agent-as-a-Service</strong>: the shared <strong>OGX</strong> server (formerly Llama Stack) receives the request on its Responses API and runs the agent loop; this is what OpenShift AI 3.5 ships, and its OpenShell isolation is still an early validation, in Red Hat's own words. In both cases the control band gave the runtime a <strong>SPIFFE</strong> identity.</li>
+    <li>To act, the agent calls a tool. The <strong>MCP gateway</strong> (Kuadrant, on Envoy) asks <strong>Authorino</strong> whether this identity may use this server and this tool, then routes to the MCP server. Authorino never sees the arguments of the call; the gateway can hand the tool name and arguments to an external guardrail service if you configure one.</li>
+    <li>To reason, the agent calls a model. <strong>MaaS</strong> checks the key and the token quota, the content guardrails (<strong>TrustyAI</strong>, <strong>NeMo Guardrails</strong>) filter input and output, <strong>llm-d</strong> picks the right pod, and <strong>KServe</strong> serves the model with <strong>vLLM</strong> on GPU. NIM is optional.</li>
+    <li>Everything emits traces to <strong>OpenTelemetry</strong>. OpenShell adds OCSF security events; the MCP gateway logs every tool call with the caller, the tool and the server.</li>
+  </ol>
+
+  <h2>Two design choices worth copying</h2>
+  <p><strong>The model is never consulted for authorization.</strong> Identity says who the agent is; token claims say which tools that identity may call. The gateway does not read the prompt. That is what makes prompt injection a contained problem instead of an existential one: the attacker can make the model want to call a tool, not make the gateway allow it.</p>
+  <p><strong>Two engines, two jobs.</strong> vLLM is the inference engine: it loads the weights and computes the tokens. llm-d runs no model at all: it routes each request to the vLLM pod where the prefix cache is warm, and it is what lets you run two versions of a model side by side behind one name. Keep the two apart in your head and the whole inference plane becomes easy to reason about.</p>
+
+  <h2>What Red Hat says it does not solve yet</h2>
+  <div class="quote">
+    <blockquote>Human approval workflows for high-risk actions still need product-level patterns.</blockquote>
+    <blockquote>Sandbox policy authoring is operationally complex at fleet scale.</blockquote>
+    <span>Red Hat Developer, "Architect an open blueprint for cloud-native AI agents", 20 July 2026, section "what it does not solve yet". The same section adds: "no single vendor closes the list".</span>
+  </div>
+  <p>I checked both statements against the code. The MCP gateway's design document lists the protocol mechanism that would let a tool call pause for a human decision as a non-goal, deferred to a future iteration. The agent platform that grew out of Kagenti has a "Gateway Policies" screen that still reads "Coming Soon". None of this is a criticism: the blueprint is honest about it, which is rare. It simply tells you where the work is.</p>
+  <p>The words <em>console</em>, <em>dashboard</em> and <em>UI</em> do not appear in the blueprint either. The operator's experience today is YAML, the OpenShift console's event feed, and traces in MLflow. That is the third gap, and the one I find most interesting.</p>
+
+  <h2>What this costs, and what is free</h2>
+  <p>Every project in the diagram is open source: Apache 2.0 for the Red Hat and NVIDIA pieces, MIT for Llama Stack. What you pay Red Hat for is the assembly, the certified images and the support: OpenShift AI is the product, Open Data Hub is the same code without the subscription. What you may pay NVIDIA for is NIM and the CUDA-X libraries in production; vLLM does the serving job without them. Part 2 of this series rebuilds the same architecture from CNCF projects only, with no platform vendor at all.</p>
+
+  <div class="cta">
+    <strong>Next in the series</strong>
+    <ol class="series">
+      <li><span><a href="../part-2/">Part 2</a></span>The same architecture in CNCF, NVIDIA and Microsoft projects, without a subscription.</li>
+      <li><span><a href="../part-3/">Part 3</a></span>What the regulations actually ask for (EU AI Act, NIS2, ISO 42001, Swiss FADP and FINMA), and which layer of the stack has to answer.</li>
+      <li><span><a href="../part-4/">Part 4</a></span>Action governance with Microsoft's Agent Governance Toolkit: how those requirements are enforced, and where it plugs into this stack.</li>
+      <li><span><a href="../part-5/">Part 5</a></span>Observability: how it is proven. What OpenTelemetry, OCSF and MLflow record, and what they cannot tell you.</li>
+      <li><span><a href="../part-6/">Part 6</a></span>Rolling out a model blue/green: how the stack changes without breaking what parts 3 to 5 established.</li>
+    </ol>
+  </div>
+
+  <div class="notice"><strong>Read, not run.</strong> Everything in this series comes from reading public code and documents at a stated date, not from running them in production. Treat it as a map to test, not a result to trust: these projects move monthly, their bugs move with them, and a component marked preview or alpha here may be stable, or gone, by the time you read this. Test it on your own cluster. When something does not match, file the issue in the project's tracker and send the fix back: that is how open code improves, and it is the only way a map like this one stays true.</div>
+
+  <hr>
+  <div class="sources">
+    <strong>Sources</strong>
+    <ol>
+      <li><a href="https://developers.redhat.com/articles/2026/07/20/architect-open-blueprint-cloud-native-ai-agents">Architect an open blueprint for cloud-native AI agents</a>, Red Hat Developer, 20 July 2026</li>
+      <li><a href="https://developers.redhat.com/articles/2026/08/18/architecting-the-red-hat-openshift-ai-dashboard-for-models-as-a-service">Architecting the Red Hat OpenShift AI dashboard for Models-as-a-Service</a>, Red Hat Developer, 18 August 2026</li>
+      <li>Repositories read on GitHub, September 2026: Kuadrant/mcp-gateway, Kuadrant/authorino, opendatahub-io/odh-dashboard, rossoctl/rossoctl, NVIDIA/OpenShell, NVIDIA-NeMo/Guardrails, NVIDIA/NeMo-Agent-Toolkit, llm-d/llm-d, kserve/kserve</li>
+    </ol>
+    <p>Independent work, not affiliated with Red Hat, NVIDIA or Microsoft. Product names belong to their owners. Views are my own and do not represent the position of my employer.</p>
+  </div>
+
+</div>
+
+</body>
+</html>

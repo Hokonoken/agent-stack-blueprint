@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Part 4 of the open agent stack blueprint: Action governance with Microsoft's Agent Governance Toolkit.">
+<title>AGT in the Agent Stack</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --ink:#131A24; --muted:#5A6675; --line:#D5DBE3; --band:#E9EDF3;
+  --cncf:#5B3FBF; --nv:#3F7D0B; --ms:#175CD3; --lf:#6B7480; --us:#C2410C;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1117; --surface:#151B24; --ink:#E6EBF2; --muted:#94A1B2; --line:#2A3340; --band:#1A222D;
+    --cncf:#B39DFF; --nv:#86CB3C; --ms:#84ADFF; --lf:#94A1B2; --us:#FB923C;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1117; --surface:#151B24; --ink:#E6EBF2; --muted:#94A1B2; --line:#2A3340; --band:#1A222D;
+  --cncf:#B39DFF; --nv:#86CB3C; --ms:#84ADFF; --lf:#94A1B2; --us:#FB923C;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.55;padding-inline:20px;padding-block:32px 56px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4.6vw,44px);font-weight:700;line-height:1.06;letter-spacing:-.01em}
+h2{font-size:23px;font-weight:600}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{max-width:72ch;color:var(--muted);margin:0}
+header{display:flex;flex-direction:column;gap:12px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:13px;color:var(--muted);padding:12px 0;border-block:1px solid var(--line)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{display:inline-block;width:22px;height:12px;border:2px solid var(--lf);background:var(--surface)}
+.sw.cncf{border-color:var(--ms)} .sw.nv{border-color:var(--nv)} .sw.ms{border-color:var(--ms);border-style:dashed} .sw.us{border-color:var(--us);border-width:3px}
+figure{margin:0;display:flex;flex-direction:column;gap:12px}
+.svgbox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);padding:10px}
+svg{display:block;min-width:1040px;width:100%;height:auto;color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif}
+svg .b rect{fill:var(--surface);stroke:var(--lf);stroke-width:1.4}
+svg .cncf rect{stroke:var(--cncf)} svg .nv rect{stroke:var(--nv)}
+svg .ms rect{stroke:var(--ms);stroke-dasharray:6 3}
+svg .us rect{stroke:var(--us);stroke-width:2.4}
+svg .t{font-size:13px;font-weight:600;fill:currentColor}
+svg .s{font-size:10.5px;fill:var(--muted)}
+svg .tag{font-size:9px;letter-spacing:.06em;font-family:"IBM Plex Mono",ui-monospace,monospace}
+svg .tc{fill:var(--cncf)} svg .tnv{fill:var(--nv)} svg .tms{fill:var(--ms)} svg .tlf{fill:var(--lf)} svg .tus{fill:var(--us)}
+svg .frame{fill:var(--band);stroke:var(--line);stroke-width:1}
+svg .pod{fill:none;stroke:var(--nv);stroke-width:1.6;stroke-dasharray:7 4}
+svg .agt{fill:none;stroke:var(--ms);stroke-width:1.4;stroke-dasharray:6 3}
+svg .cap{font-size:10.5px;letter-spacing:.07em;font-weight:600}
+svg .lbl{font-size:10.5px;fill:var(--muted)}
+svg .flow{fill:none;stroke:currentColor;stroke-width:1.3}
+svg .msflow{fill:none;stroke:var(--ms);stroke-width:1.4;stroke-dasharray:5 3}
+svg .tr{fill:none;stroke:var(--muted);stroke-width:1.1;stroke-dasharray:2 4}
+svg .mfill{fill:var(--ms)} svg .tfill{fill:var(--muted)}
+svg .bar rect{fill:var(--band);stroke:var(--line)}
+svg .mat{font-size:9px;font-style:italic;fill:var(--muted)}
+svg .svc{fill:none;stroke:var(--line);stroke-width:1.6;stroke-dasharray:3 3}
+svg .blue rect{fill:var(--surface);stroke:var(--ms);stroke-width:1.8}
+svg .green rect{fill:var(--surface);stroke:var(--nv);stroke-width:1.8}
+svg .tblue{fill:var(--ms)} svg .tgreen{fill:var(--nv)}
+svg .wflow{fill:none;stroke:var(--nv);stroke-width:2.2}
+svg .wflow2{fill:none;stroke:var(--ms);stroke-width:2.2}
+svg .shadow{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3}
+svg .gate rect{fill:var(--band);stroke:var(--us);stroke-width:1.6}
+svg .ghost rect{fill:var(--surface);stroke:var(--cncf);stroke-width:1.2;stroke-dasharray:5 3}
+figcaption code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+figcaption{max-width:78ch;color:var(--muted);font-size:14px}
+figcaption a{color:var(--us)}
+svg a{cursor:pointer}
+section{display:flex;flex-direction:column;gap:14px}
+.tblbox{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:800px;font-size:13.5px}
+th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:10px;border-bottom:1px solid var(--line);background:var(--band)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td:first-child{font-weight:600;white-space:nowrap}
+td code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+.caveats{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));border:1px solid var(--line);background:var(--surface)}
+.cv{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.cv h3{font-size:17px;font-weight:600}
+.cv p{margin:0;font-size:14px}
+footer{font-size:12.5px;color:var(--muted);max-width:88ch}
+footer a{color:inherit}
+
+.post{max-width:76ch;margin:0 auto;display:flex;flex-direction:column;gap:22px;font-size:16.5px;line-height:1.6}
+.post h1{font-size:clamp(30px,5vw,46px)}
+.post h2{margin-top:10px}
+.post p{margin:0}
+.post ul,.post ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.meta{font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+.kicker{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ms)}
+.takeaways{border:1px solid var(--line);background:var(--surface);padding:18px 22px;display:flex;flex-direction:column;gap:10px}
+.takeaways h3{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.takeaways ol{font-size:15.5px}
+.quote{border-left:3px solid var(--rh);padding:8px 18px;display:flex;flex-direction:column;gap:8px}
+.quote blockquote{margin:0;font-size:18px;font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;font-weight:500}
+.quote span{font-size:13.5px;color:var(--muted)}
+.cta{border:2px solid var(--us);padding:18px 22px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.cta strong{color:var(--us)}
+.series{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:15.5px}
+.series li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:baseline}
+.series li span a{color:inherit;text-decoration:none}
+.series li span a:hover{text-decoration:underline}
+.series li span{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--us);white-space:nowrap}
+.fig{display:flex;flex-direction:column;gap:10px}
+.fig .svgbox{padding:8px}
+.fig figcaption{font-size:13.5px}
+.wide{max-width:1280px;margin:0 auto;width:100%}
+.sources{font-size:13.5px;color:var(--muted)}
+.sources ol{gap:4px}
+.sources a{color:inherit}
+hr{border:0;border-top:1px solid var(--line);margin:8px 0}
+
+.tblbox{margin:0}
+
+.replsec{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.replsec h2{margin:0}
+table.repl{min-width:900px;font-size:14px;table-layout:fixed}
+table.repl col.c1{width:15%} table.repl col.c2{width:21%} table.repl col.c3{width:28%} table.repl col.c4{width:15%} table.repl col.c5{width:21%}
+table.repl th{padding:12px 14px}
+table.repl td{padding:11px 14px;line-height:1.4;vertical-align:top}
+table.repl td:first-child{white-space:normal;font-weight:600}
+table.repl tbody tr:nth-child(even) td{background:color-mix(in srgb, var(--band) 55%, transparent)}
+table.repl td:nth-child(3){color:var(--ink)}
+table.repl td:nth-child(2),table.repl td:nth-child(4),table.repl td:nth-child(5){color:var(--muted)}
+
+.law{border:1px solid var(--line);background:var(--surface);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.law > div.span{grid-column:1/-1}
+.law > div.span ul{columns:2;column-gap:28px}
+.law > div.span ul li{break-inside:avoid}
+.law > div{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.law h3{font-size:16px;font-weight:600}
+.law .when{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--cncf);letter-spacing:.04em}
+.law p{margin:0;font-size:14px}
+.law ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.gaps{border-left:3px solid var(--us);padding:8px 18px;display:flex;flex-direction:column;gap:10px}
+.gaps p{margin:0}
+.notice{font-size:13.5px;color:var(--muted);border:1px dashed var(--line);padding:10px 14px}
+
+.seq{border:1px solid var(--line);background:var(--surface);padding:14px 18px;overflow-x:auto}
+.quote{border-left:3px solid var(--ms)}
+.cfgblock{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.cfgblock > strong{padding:12px 16px 10px;font-size:15px;border-bottom:1px solid var(--line)}
+.cfgblock .src{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 16px;background:var(--band);font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--muted);border-bottom:1px solid var(--line)}
+.cfgblock .src b{font-weight:500;color:var(--ink)}
+pre.cfg{margin:0;padding:14px 16px;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;tab-size:2}
+pre.cfg .c{color:var(--muted);font-style:italic}
+pre.cfg .k{color:var(--cncf);font-weight:500}
+pre.cfg .v{color:var(--ink)}
+pre.cfg .s{color:var(--nv)}
+pre.cfg .n{color:var(--ms)}
+.cfgblock .note{padding:10px 16px;font-size:13.5px;color:var(--muted);border-top:1px solid var(--line)}
+.sn{max-width:76ch;margin:0 auto 18px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.04em;color:var(--muted)}
+.sn a{color:var(--us);text-decoration:none}
+.sn a:hover,.sn a:focus-visible{text-decoration:underline;outline:none}
+body{margin:0}
+</style>
+</head>
+<body>
+<nav class="sn"><a href="../part-3/">&larr; Part 3</a><a href="../">All six parts</a><a href="../part-5/">Part 5 &rarr;</a></nav>
+<div class="post">
+  <span class="kicker">Blueprint · part 4 of 6 · draft for review</span>
+  <h1>Action governance with Microsoft's Agent Governance Toolkit: how the two empty rows get an answer</h1>
+  <p class="lede">Part 3 left two demands without a box in the stack: a person who can override or stop the agent, with the authority to (AI Act article 14), and a way to keep the agent within its intended use for the task at hand (ISO 42001 A.9.4). Microsoft's Agent Governance Toolkit, MIT-licensed and public since March 2026, is the most complete open answer I have found to both. Here is what it does, read in its code, and where it plugs into the stack of parts 1 and 2.</p>
+  <div class="meta"><span>Draft · September 2026</span><span>Reading time: 11 min</span><span>Views are my own, not my employer's</span></div>
+
+  <div class="takeaways">
+    <h3>Three things to take away</h3>
+    <ol>
+      <li><strong>It governs the action, not the text.</strong> Guardrails filter prompts and answers. The toolkit decides on each tool call: this action, with these arguments, for this agent, allowed, denied or escalated to a human. That is the grain the regulations talk about.</li>
+      <li><strong>Intent is a real object in the code.</strong> An agent declares what it plans to do; the plan is approved; anything outside it is blocked or forces a re-declaration; a sub-agent's intent can only be narrower than its parent's. That is "intended use" enforced per task, not per role.</li>
+      <li><strong>It is a library and a sidecar, not a platform.</strong> No console, no Kubernetes admission, partial tenant isolation. It plugs into the stack at three points; the stack around it stays what it was in parts 1 and 2.</li>
+    </ol>
+  </div>
+
+  <h2>What it is</h2>
+  <p>The Agent Governance Toolkit is a monorepo published by Microsoft on 2 March 2026 and announced on 2 April 2026, at version 5.0.0 as I write. Seven packages, five languages (Python, TypeScript, Rust, .NET, Go), and a specification called Agent Control Specification whose reference runtime lives in a separate Rust crate. The code I read is the public repository at commit e7f5d2b of 19 September 2026. Everything below is a reading of that code; none of it has been executed.</p>
+</div>
+
+<figure class="fig wide">
+  <div class="svgbox">
+  <svg viewBox="0 0 1180 560" role="img" aria-label="Microsoft's Agent Governance Toolkit in the agent stack. On the left, its four capabilities: per-action policy in Cedar or Rego, declared intent with drift control, human approval by webhook or MCP elicitation, and a Merkle-tree audit. Each is linked to the regulatory rows it answers. On the right, the three places where it plugs into the stack: as an SDK or sidecar in the agent pod, as the external guardrail called by the MCP gateway, and as an external policy behind the ext_authz of the ingress gateway.">
+<defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker><marker id="m4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mfill" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+<rect class="agt" x="20" y="20" width="560" height="520"/>
+<text class="cap tms" x="36" y="42">AGENT GOVERNANCE TOOLKIT · MICROSOFT · MIT · v5.0.0 (Sept. 2026)</text>
+<text class="lbl" x="36" y="58">what it does, as read in the code</text>
+<g class="b ms"><rect x="36" y="76" width="250" height="88"/><text class="t" x="161" y="100" text-anchor="middle">Policy per action</text><text class="s" x="161" y="118" text-anchor="middle">Cedar and Rego bundles; grain = action type</text><text class="s" x="161" y="134" text-anchor="middle">+ arguments; verdicts allow, deny, escalate</text><text class="s" x="161" y="150" text-anchor="middle">policy-engine/policy/lib, cedar-lib</text></g>
+<g class="b ms"><rect x="310" y="76" width="250" height="88"/><text class="t" x="435" y="100" text-anchor="middle">Declared intent</text><text class="s" x="435" y="118" text-anchor="middle">DECLARED → APPROVED → EXECUTING → done</text><text class="s" x="435" y="134" text-anchor="middle">drift: soft block, hard block, re-declare</text><text class="s" x="435" y="150" text-anchor="middle">child intents can only narrow · agent_os/intent.py</text></g>
+<g class="b ms"><rect x="36" y="184" width="250" height="88"/><text class="t" x="161" y="208" text-anchor="middle">Human approval</text><text class="s" x="161" y="226" text-anchor="middle">webhook that fails closed on timeout</text><text class="s" x="161" y="242" text-anchor="middle">MCP elicitation · Slack, Teams, PagerDuty</text><text class="s" x="161" y="258" text-anchor="middle">agentmesh/governance/approval_webhook.py</text></g>
+<g class="b ms"><rect x="310" y="184" width="250" height="88"/><text class="t" x="435" y="208" text-anchor="middle">Audit, tamper-evident</text><text class="s" x="435" y="226" text-anchor="middle">Merkle tree with inclusion proofs</text><text class="s" x="435" y="242" text-anchor="middle">plus a hash-chained flight recorder</text><text class="s" x="435" y="258" text-anchor="middle">agentmesh/governance/audit.py</text></g>
+<text class="cap" x="36" y="306" fill="currentColor">WHICH ROWS OF PART 3 IT ANSWERS</text>
+<g class="bar"><rect x="36" y="318" width="524" height="30"/><text class="s" x="48" y="337">AI Act art. 14 human oversight, art. 26(2) authority → approval, with the approver recorded</text></g>
+<g class="bar"><rect x="36" y="354" width="524" height="30"/><text class="s" x="48" y="373">ISO 42001 A.9.4 intended use, FADP purpose → declared intent, drift blocked</text></g>
+<g class="bar"><rect x="36" y="390" width="524" height="30"/><text class="s" x="48" y="409">AI Act art. 12 logs, FINMA §2.6 explainability → per-action verdicts, Merkle audit</text></g>
+<g class="bar"><rect x="36" y="426" width="524" height="30"/><text class="s" x="48" y="445">NIS2 art. 21(2) access control → policy at the grain of the tool call and its arguments</text></g>
+<text class="cap" x="36" y="486" fill="currentColor">WHAT IT DOES NOT DO</text>
+<text class="s" x="36" y="504">no Kubernetes admission webhook · no web console (IDE and browser extensions only) · tenant isolation partial</text>
+<text class="s" x="36" y="520">the intent module lives in agent-os, not in the policy-engine core · no external witness for the audit tree</text>
+
+<text class="cap" x="640" y="42" fill="currentColor">THREE PLACES IT PLUGS INTO THE STACK OF PARTS 1 AND 2</text>
+<g class="b nv"><rect x="640" y="76" width="520" height="118"/><text class="t" x="656" y="100">1 · In the agent pod</text><text class="s" x="656" y="120">as a library in the harness (Python, TypeScript, .NET, Go, Rust SDKs)</text><text class="s" x="656" y="136">or as a network sidecar next to it (FastAPI on port 8001, or the Go sidecar)</text><text class="s" x="656" y="152">this is where intent lives: the agent declares, the toolkit blocks what is off-list</text><text class="s" x="656" y="168">works for both patterns: the OpenShell pod and the OGX server</text><text class="tag tnv" x="1152" y="90" text-anchor="end">SANDBOX / RUNTIME</text></g>
+<g class="b cncf"><rect x="640" y="210" width="520" height="118"/><text class="t" x="656" y="234">2 · At the MCP gateway, as the external guardrail</text><text class="s" x="656" y="254">the gateway already sends tool name + arguments to an HTTP service and applies</text><text class="s" x="656" y="270">allow, block or modify, failing closed on outage (Red Hat: /v1/guardrail/checks ;</text><text class="s" x="656" y="286">Envoy AI Gateway: ext_proc on MCPRoute) — an adapter maps that contract to AGT</text><text class="s" x="656" y="302">this is where a tool call can be held for a human</text><text class="tag tc" x="1152" y="224" text-anchor="end">MCP GATEWAY</text></g>
+<g class="b cncf"><rect x="640" y="344" width="520" height="118"/><text class="t" x="656" y="368">3 · Behind the ingress authorization</text><text class="s" x="656" y="388">Authorino accepts an external OPA policy and HTTP calls; Open Policy Agent runs Rego</text><text class="s" x="656" y="404">AGT ships its rules as Rego and exposes a decision service (agentmesh/engine_api)</text><text class="s" x="656" y="420">same policy language on both sides: one bundle, evaluated at the door</text><text class="s" x="656" y="436">grain here is server + tool; arguments stay with insertion point 2</text><text class="tag tc" x="1152" y="358" text-anchor="end">EXT_AUTHZ</text></g>
+<g class="msflow"><line x1="580" y1="120" x2="638" y2="120" marker-end="url(#m4)"/><line x1="580" y1="228" x2="638" y2="254" marker-end="url(#m4)"/><line x1="580" y1="120" x2="638" y2="388" marker-end="url(#m4)"/></g>
+<g class="bar"><rect x="640" y="480" width="520" height="60"/><text class="s" x="656" y="502">Read in the code on 21 September 2026 (commit e7f5d2b). Nothing here has been executed:</text><text class="s" x="656" y="518">the three insertion points are a reading of the extension points, not a tested integration.</text><text class="s" x="656" y="534">Microsoft documents sidecar deployment on AKS with Helm charts; on-premises is your work.</text></g>
+</svg>
+  </div>
+  <figcaption>Left: the four capabilities, with the file where each lives, and the rows of part 3 they answer. Right: the three places where the toolkit can be inserted into the stack. Insertion 1 is where intent lives; insertion 2 is where a tool call can be held for a human; insertion 3 reuses the policy language the ingress already speaks.</figcaption>
+</figure>
+
+<div class="post">
+  <h2>The four capabilities, and the row each one answers</h2>
+  <p><strong>Policy per action.</strong> Rules are written in Cedar or Rego and shipped as bundles: twelve Rego modules and eleven Cedar files in the repository. The grain is the action type plus its arguments, so a rule can say "outbound HTTP to this host is denied" or "writes to this table escalate". Verdicts are allow, deny or escalate. This is NIS2's "access control policies" at the grain that matters for an agent: the tool call, not the login.</p>
+  <p><strong>Sector and compliance templates.</strong> The repository also ships content, not only mechanism: four sector starters (financial services, healthcare, K-12 education, general SaaS), each an Agent Control Specification manifest bound to a Rego bundle of about 220 lines whose rules carry OWASP Agentic Top 10 identifiers, and fifteen "kernel" policy templates in the agent-os package (GDPR, HIPAA, PCI-DSS, SOX, data protection, multi-tenant, rate limiting, secure coding, environment profiles) written as pattern-based deny rules that raise a pause or a kill signal. All are marked as starting points to customise. The docs folder adds an EU AI Act checklist, an ISO 42001 mapping and a CIS Controls mapping. For the rows of part 3, this means the sector vocabulary is already there; what is missing is the local regime, FINMA or the Swiss FADP for instance, which nobody ships.</p>
+  <p><strong>Declared intent.</strong> In <code>agent_os/intent.py</code>, an <code>ExecutionIntent</code> carries a list of planned actions and moves through declared, approved, executing, then completed, violated or expired. A drift policy decides what happens to an action outside the plan: soft block, hard block or re-declare. A child intent, created for a sub-agent, must be a subset of its parent's planned actions, and the code raises an error otherwise. This is the closest thing I have seen in open code to ISO 42001's "intended use of the AI system" enforced at runtime, and to the FADP's "purpose of processing" applied to an agent rather than a database.</p>
+  <p><strong>Human approval.</strong> The escalation verdict can be resolved by a webhook, by MCP elicitation when the client supports it, or by notifications to Slack, Teams or PagerDuty, all present as production code. The webhook is designed to fail closed: on timeout, on transport error, or if the answer does not echo the request id and the digest of the action, the decision is deny. The approver is recorded. This is article 14's override and stop, and article 26(2)'s "necessary competence, training and authority", with the who-approved-what written down.</p>
+  <p><strong>Tamper-evident audit.</strong> <code>agentmesh/governance/audit.py</code> keeps a Merkle tree over the audit entries, with a root hash and inclusion proofs; a second component, the flight recorder, chains entries by SHA-256. An auditor can verify that an entry was there and has not been altered since. Article 12 asks for logs; FINMA asks that results can be "understood, explained or reproduced". A verdict per action, with the rule that produced it, is the explainable part; the tree is the reproducible part.</p>
+
+  <h2>Where it plugs into the stack</h2>
+  <p><strong>In the agent pod</strong>, as a library inside the harness, for which there are SDKs in all five languages, or as a network sidecar next to it: the repository ships a FastAPI sidecar on port 8001 and a Go one. This is where intent has to live, because only the runtime knows what the agent is about to do. It works for both patterns of part 1: the agent in its OpenShell pod, and the shared OGX server.</p>
+  <p><strong>At the MCP gateway, as the external guardrail.</strong> Both gateways of parts 1 and 2 already know how to hand a tool call to an external service before executing it. Red Hat's MCP gateway posts the tool name and arguments to a guardrail endpoint and applies allow, block or modify, failing closed if the service is down; Envoy AI Gateway does the same through an ext_proc on the MCPRoute. That contract is not the toolkit's, so an adapter is needed, but the seam exists. This is the one place in the stack where a tool call can be held while a human decides.</p>
+  <p><strong>Behind the ingress authorization.</strong> Authorino accepts an external OPA policy and HTTP calls; Open Policy Agent evaluates Rego natively. The toolkit publishes its rules as Rego and exposes a decision service. One bundle can therefore be evaluated at the door, at the grain of server and tool, while the arguments are checked at insertion point 2.</p>
+
+  <h2>One tool call, end to end</h2>
+</div>
+<figure class="fig wide">
+  <div class="svgbox">
+  <svg viewBox="0 0 1180 560" role="img" aria-label="Sequence of one tool call with the toolkit: the agent declares its intent and gets it approved; it calls a tool through the MCP gateway; the gateway asks the toolkit; the Cedar or Rego verdict is escalate; the toolkit sends an approval request with the action digest to a human; the human approves by echoing the id and digest; the toolkit answers allow; the gateway calls the MCP server; an audit entry is appended to the Merkle tree. A timeout, transport error or mismatched echo means deny.">
+<defs><marker id="sq" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<g class="b "><rect x="30" y="16" width="180" height="46"/><text class="t" x="120" y="36" text-anchor="middle">Agent</text><text class="s" x="120" y="54" text-anchor="middle">harness, in its pod</text></g>
+<line x1="120" y1="62" x2="120" y2="520" stroke="var(--line)" stroke-width="1.2" stroke-dasharray="4 4"/>
+<g class="b ms"><rect x="270" y="16" width="180" height="46"/><text class="t" x="360" y="36" text-anchor="middle">Toolkit</text><text class="s" x="360" y="54" text-anchor="middle">SDK or sidecar</text></g>
+<line x1="360" y1="62" x2="360" y2="520" stroke="var(--line)" stroke-width="1.2" stroke-dasharray="4 4"/>
+<g class="b cncf"><rect x="510" y="16" width="180" height="46"/><text class="t" x="600" y="36" text-anchor="middle">MCP gateway</text><text class="s" x="600" y="54" text-anchor="middle">external guardrail hook</text></g>
+<line x1="600" y1="62" x2="600" y2="520" stroke="var(--line)" stroke-width="1.2" stroke-dasharray="4 4"/>
+<g class="b "><rect x="750" y="16" width="180" height="46"/><text class="t" x="840" y="36" text-anchor="middle">Human</text><text class="s" x="840" y="54" text-anchor="middle">Slack, Teams, IDE</text></g>
+<line x1="840" y1="62" x2="840" y2="520" stroke="var(--line)" stroke-width="1.2" stroke-dasharray="4 4"/>
+<g class="b "><rect x="990" y="16" width="180" height="46"/><text class="t" x="1080" y="36" text-anchor="middle">MCP server</text><text class="s" x="1080" y="54" text-anchor="middle">the tool</text></g>
+<line x1="1080" y1="62" x2="1080" y2="520" stroke="var(--line)" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="354" y="88" width="12" height="400" fill="var(--band)" stroke="var(--ms)" stroke-width="1" stroke-dasharray="3 2"/>
+<line x1="126" y1="110" x2="352" y2="110" stroke="currentColor" stroke-width="1.3" marker-end="url(#sq)"/>
+<text class="s" x="240.0" y="104" text-anchor="middle" fill="currentColor">1 · declare intent: planned actions</text>
+<line x1="354" y1="150" x2="128" y2="150" stroke="currentColor" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#sq)"/>
+<text class="s" x="240.0" y="144" text-anchor="middle" fill="currentColor">2 · intent approved</text>
+<line x1="126" y1="190" x2="592" y2="190" stroke="currentColor" stroke-width="1.3" marker-end="url(#sq)"/>
+<text class="s" x="490" y="184" text-anchor="middle" fill="currentColor">3 · tools/call write_record(args)</text>
+<line x1="594" y1="230" x2="368" y2="230" stroke="currentColor" stroke-width="1.3" marker-end="url(#sq)"/>
+<text class="s" x="480.0" y="224" text-anchor="middle" fill="currentColor">4 · guardrail check: tool + arguments</text>
+<path d="M366,262 h34 v18 h-34" fill="none" stroke="currentColor" stroke-width="1.3" marker-end="url(#sq)"/>
+<text class="s" x="408" y="274" fill="currentColor">5 · Cedar / Rego verdict: escalate</text>
+<line x1="366" y1="310" x2="832" y2="310" stroke="currentColor" stroke-width="1.3" marker-end="url(#sq)"/>
+<text class="s" x="700" y="304" text-anchor="middle" fill="currentColor">6 · approval request: id + digest of the action</text>
+<line x1="834" y1="350" x2="368" y2="350" stroke="currentColor" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#sq)"/>
+<text class="s" x="520" y="344" text-anchor="middle" fill="currentColor">7 · approve, echoing id + digest</text>
+<line x1="366" y1="390" x2="592" y2="390" stroke="currentColor" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#sq)"/>
+<text class="s" x="480.0" y="384" text-anchor="middle" fill="currentColor">8 · allow</text>
+<line x1="606" y1="430" x2="1072" y2="430" stroke="currentColor" stroke-width="1.3" marker-end="url(#sq)"/>
+<text class="s" x="840.0" y="424" text-anchor="middle" fill="currentColor">9 · write_record(args)</text>
+<path d="M366,462 h34 v18 h-34" fill="none" stroke="currentColor" stroke-width="1.3" marker-end="url(#sq)"/>
+<text class="s" x="408" y="474" fill="currentColor">10 · audit entry appended to the Merkle tree</text>
+<g class="bar"><rect x="640" y="392" width="380" height="40"/><text class="s" x="650" y="408">if 7 times out, fails in transport, or does not echo</text><text class="s" x="650" y="424">the exact id and digest: the verdict is deny</text></g>
+<text class="lbl" x="590" y="548" text-anchor="middle">solid = request · dashed = answer · the toolkit's column is active from the first declaration to the audit entry</text>
+</svg>
+  </div>
+</figure>
+<div class="post">
+  <p>Two details in that sequence carry the regulatory weight. The approval answer must echo the request id and the digest of the exact action, or it is treated as a denial: a human cannot approve something other than what will run. And the audit entry is written whether the verdict was allow, deny or escalate, so the absence of an entry is itself evidence.</p>
+
+  <h2>What the configuration looks like, in the toolkit's own files</h2>
+  <p>Five excerpts, all taken from the public repository at commit 2e98345 of 21 September 2026, with the file path above each. They show where the four capabilities of this article are switched on: which tool calls are intercepted and at what grain, what happens on an "escalate" verdict, what a sample governance policy looks like, what an intent contains when it is declared, and what the sector and compliance templates already contain.</p>
+
+  <div class="cfgblock">
+    <strong>1. The policy manifest: where a tool call is intercepted</strong>
+    <div class="src"><span><b>policy-engine/examples/records_agent/manifest.yaml</b></span><span>YAML</span></div>
+    <pre class="cfg"><span class="c"># Agent Control Specification manifest (excerpt): the pre_tool_call intervention point</span>
+<span class="c"># hands the tool name and its arguments to a Rego query before the call runs</span>
+<span class="k">agent_control_specification_version</span>: <span class="v">0.4.0-alpha.1</span>
+<span class="k">metadata</span>:
+  <span class="k">name</span>: <span class="v">medical_records_assistant_guardrails</span>
+<span class="k">policies</span>:
+  <span class="k">medical_records_assistant_guardrails</span>:
+    <span class="k">type</span>: <span class="v">rego</span>
+    <span class="k">bundle</span>: <span class="v">./policy</span>
+    <span class="k">query</span>: <span class="v">data.agent_control_specification.medical_records_assistant_guardrails.verdict</span>
+<span class="k">intervention_points</span>:
+  <span class="k">pre_tool_call</span>:
+    <span class="k">policy_target</span>: <span class="v">$.tool_call.args</span>
+    <span class="k">policy_target_kind</span>: <span class="v">tool_args</span>
+    <span class="k">annotations</span>:
+      <span class="k">access_scope</span>:
+        <span class="k">from</span>: <span class="v">$.tool_call.args</span>
+    <span class="k">policy</span>:
+      <span class="k">id</span>: <span class="v">medical_records_assistant_guardrails</span>
+      <span class="k">query</span>: <span class="v">data.agent_control_specification.medical_records_assistant_guardrails.pre_tool_call_verdict</span>
+    <span class="k">tool_name_from</span>: <span class="v">$.tool_call.name</span>
+<span class="k">tools</span>:
+  <span class="k">fetch_record</span>:
+    <span class="k">type</span>: <span class="v">Tool</span>
+    <span class="k">id</span>: <span class="v">fetch_record</span>
+    <span class="k">clearance</span>: <span class="v">[medical_records]</span>
+    <span class="k">security_labels</span>: <span class="v">[patient_record]</span>
+  <span class="k">export_data</span>:
+    <span class="k">type</span>: <span class="v">Tool</span>
+    <span class="k">id</span>: <span class="v">export_data</span>
+    <span class="k">clearance</span>: <span class="v">[medical_records, data_export]</span>
+    <span class="k">security_labels</span>: <span class="v">[bulk_phi]</span></pre>
+    <div class="note">excerpt; the same file declares input, pre_model_call, post_model_call, post_tool_call and output points</div>
+  </div>
+
+
+  <div class="cfgblock">
+    <strong>2. The approval section: what happens on "escalate"</strong>
+    <div class="src"><span><b>policy-engine/core/schema/approval.schema.json</b></span><span>YAML · shape from the schema</span></div>
+    <pre class="cfg"><span class="c"># Shape of the optional top-level &quot;approval&quot; section of a manifest, as defined by</span>
+<span class="c"># approval.schema.json. No example manifest in the repository uses it yet: the engine</span>
+<span class="c"># validates the shape and treats the resolver configuration as opaque host config.</span>
+<span class="k">approval</span>:
+  <span class="k">default_resolver</span>: <span class="v">reviewers</span><span class="c">      # absent → the escalate verdict resolves to deny</span>
+  <span class="k">timeout_seconds</span>: <span class="n">300</span><span class="c">             # must be &gt; 0</span>
+  <span class="k">on_timeout</span>: <span class="v">deny</span><span class="c">                 # deny | allow | suspend</span>
+  <span class="k">fatigue_threshold</span>: <span class="n">20</span><span class="c">            # soft cap on approvals per agent per window</span>
+  <span class="k">fatigue_window_seconds</span>: <span class="n">3600</span>
+  <span class="k">resolvers</span>:
+    <span class="k">reviewers</span>:
+      <span class="k">type</span>: <span class="v">webhook</span><span class="c">                # discriminating field; the rest is host-defined</span>
+      <span class="k">url</span>: <span class="v">https://approvals.example.internal/agt</span></pre>
+    <div class="note">Field names, enum and constraints from the schema. The webhook itself is agentmesh/governance/approval_webhook.py, which denies on timeout, transport error, or an answer that does not echo the request id and the action digest.</div>
+  </div>
+
+
+  <div class="cfgblock">
+    <strong>3. A sample governance policy: approval, delegation, audit</strong>
+    <div class="src"><span><b>examples/policies/adk-agt-manifest.yaml</b></span><span>YAML</span></div>
+    <pre class="cfg"><span class="c"># Sample policy shipped for Google ADK agents; the repository marks it as a starting</span>
+<span class="c"># point to customise, not a production policy</span>
+<span class="k">version</span>: <span class="s">&quot;1.0&quot;</span>
+<span class="k">name</span>: <span class="v">adk-governance</span>
+<span class="k">adk_governance</span>:
+  <span class="k">blocked_tools</span>:
+    - <span class="v">execute_shell</span>
+    - <span class="v">run_command</span>
+    - <span class="v">delete_database</span>
+    - <span class="v">drop_table</span>
+  <span class="k">max_tool_calls</span>: <span class="n">100</span>
+  <span class="k">require_approval_for</span>:<span class="c">            # these go to a human before execution</span>
+    - <span class="v">send_email</span>
+    - <span class="v">publish_document</span>
+    - <span class="v">deploy_service</span>
+    - <span class="v">transfer_funds</span>
+  <span class="k">delegation</span>:
+    <span class="k">max_depth</span>: <span class="n">3</span>
+    <span class="k">require_scope_narrowing</span>: <span class="n">true</span><span class="c">  # a sub-agent may only get a narrower scope</span>
+  <span class="k">audit</span>:
+    <span class="k">log_all_tool_calls</span>: <span class="n">true</span>
+    <span class="k">log_delegations</span>: <span class="n">true</span>
+    <span class="k">include_tool_args</span>: <span class="n">false</span><span class="c">       # &quot;Set true only in dev (may contain PII)&quot;</span></pre>
+    <div class="note">comments shortened</div>
+  </div>
+
+
+  <div class="cfgblock">
+    <strong>4. The intent: what an agent declares before it acts</strong>
+    <div class="src"><span><b>agent-governance-python/agent-os/src/agent_os/intent.py</b></span><span>YAML · rendering of ExecutionIntent.to_dict</span></div>
+    <pre class="cfg"><span class="c"># An intent is declared from code (IntentManager.declare_intent) and serialised by the</span>
+<span class="c"># toolkit as a dictionary; this is that dictionary rendered as YAML, with the values of</span>
+<span class="c"># the repository&#x27;s intent-auth demo</span>
+<span class="k">agent_id</span>: <span class="v">bank-agent</span>
+<span class="k">planned_actions</span>:
+  - <span class="k">action</span>: <span class="v">read_balance</span>
+  - <span class="k">action</span>: <span class="v">transfer_funds</span>
+    <span class="k">params_schema</span>:
+      <span class="k">max_amount</span>: <span class="n">1000</span><span class="c">             # an argument outside this is off-plan</span>
+<span class="k">drift_policy</span>: <span class="v">hard_block</span><span class="c">           # soft_block | hard_block | re_declare</span>
+<span class="k">parent_intent_id</span>: <span class="n">null</span><span class="c">             # set for a sub-agent: its actions must be a subset</span>
+<span class="k">expires_at</span>: <span class="s">&quot;2026-09-22T15:00:00+00:00&quot;</span></pre>
+    <div class="note">Classes ExecutionIntent, IntentAction and DriftPolicy; values from examples/intent-auth/intent_auth_demo.py. Not a file format the toolkit reads: it is what the toolkit writes, and what the audit entry carries.</div>
+  </div>
+
+
+  <div class="cfgblock">
+    <strong>5. The sector and compliance templates the repository ships</strong>
+    <div class="src"><span><b>examples/policy-templates/financial-services.yaml</b></span><span>YAML · sector starter</span></div>
+    <pre class="cfg"><span class="c"># Sector starter shipped in the repository: a manifest that binds the</span>
+<span class="c"># financial-services Rego bundle to the input and output intervention points</span>
+<span class="k">agent_control_specification_version</span>: <span class="v">0.4.0-alpha.1</span>
+<span class="k">metadata</span>:
+  <span class="k">name</span>: <span class="v">financial-services-asi-starter</span>
+  <span class="k">version</span>: <span class="s">&quot;1.0&quot;</span>
+<span class="k">policies</span>:
+  <span class="k">financial_services</span>:
+    <span class="k">type</span>: <span class="v">rego</span>
+    <span class="k">bundle</span>: <span class="v">rego</span>
+    <span class="k">query</span>: <span class="v">data.agt.examples.templates.financial_services.result</span>
+<span class="k">intervention_points</span>:
+  <span class="k">input</span>:
+    <span class="k">policy_target</span>: <span class="v">$.input.body</span>
+    <span class="k">policy</span>:
+      <span class="k">id</span>: <span class="v">financial_services</span>
+  <span class="k">output</span>:
+    <span class="k">policy_target</span>: <span class="v">$.output.content</span>
+    <span class="k">policy</span>:
+      <span class="k">id</span>: <span class="v">financial_services</span></pre>
+    <div class="src"><span><b>examples/policy-templates/rego/financial-services.rego</b></span><span>Rego · excerpt</span></div>
+    <pre class="cfg"><span class="c"># Two of the rules in the bundle (227 lines), organised by OWASP Agentic Top 10 identifiers</span>
+<span class="k">candidates contains</span> {<span class="s">&quot;name&quot;</span>: <span class="s">&quot;asi02-block-network-exfiltration&quot;</span>, <span class="s">&quot;action&quot;</span>: <span class="s">&quot;deny&quot;</span>, <span class="s">&quot;priority&quot;</span>: 100,
+  <span class="s">&quot;message&quot;</span>: <span class="s">&quot;ASI-02: Outbound data transfer tools are prohibited without explicit allowlisting&quot;</span>} if {
+    regex.match(`^(http_post|http_put|upload_file|send_data|ftp_upload)$`, sprintf(<span class="s">&quot;%v&quot;</span>, [object.get(context, <span class="s">&quot;action&quot;</span>, 0)]))
+}
+<span class="k">candidates contains</span> {<span class="s">&quot;name&quot;</span>: <span class="s">&quot;asi03-account-mfa-bypass&quot;</span>, <span class="s">&quot;action&quot;</span>: <span class="s">&quot;deny&quot;</span>, <span class="s">&quot;priority&quot;</span>: 100,
+  <span class="s">&quot;message&quot;</span>: <span class="s">&quot;ASI-03: Account Integrity — unauthorized attempt to disable MFA or authentication lockouts&quot;</span>} if {
+    regex.match(`(?i)(remove|disable|bypass|waive)\s+(mfa|2fa|multi-factor|lockout|authentication)`, sprintf(<span class="s">&quot;%v&quot;</span>, [object.get(context, <span class="s">&quot;output&quot;</span>, 0)]))
+}</pre>
+    <div class="src"><span><b>agent-governance-python/agent-os/templates/policies/gdpr.yaml</b></span><span>YAML · kernel template, excerpt</span></div>
+    <pre class="cfg"><span class="c"># One of fifteen &quot;kernel&quot; policy templates in agent-os: gdpr, hipaa, pci-dss, sox-compliance,</span>
+<span class="c"># data-protection, multi-tenant, api-gateway, content-safety, cost-controls, rate-limiting,</span>
+<span class="c"># secure-coding, production, development, research, enterprise</span>
+<span class="k">kernel</span>:
+  <span class="k">version</span>: <span class="s">&quot;1.0&quot;</span>
+  <span class="k">mode</span>: <span class="v">strict</span>
+  <span class="k">template</span>: <span class="v">gdpr</span>
+<span class="k">signals</span>:
+  <span class="k">enabled</span>:
+    - <span class="v">SIGSTOP</span><span class="c">   # Pause for DPO review</span>
+    - <span class="v">SIGKILL</span><span class="c">   # Terminate on violation</span>
+    - <span class="v">SIGCONT</span><span class="c">   # Resume after approval</span>
+<span class="k">policies</span>:
+  - <span class="k">name</span>: <span class="v">pii_contact_detection</span>
+    <span class="k">description</span>: <span class="v">Block exposure of contact information</span>
+    <span class="k">severity</span>: <span class="v">critical</span>
+    <span class="k">category</span>: <span class="v">compliance</span>
+    <span class="k">scope</span>: <span class="v">[input, output]</span>
+    <span class="k">deny</span>:
+      - <span class="k">patterns</span>:
+          - <span class="v">&#x27;(?i)(email|e-mail)\s*[:=#]\s*[&quot;&#x27;&#x27;]?[\w.+-]+@[\w-]+\.[\w.-]+[&quot;&#x27;&#x27;]?&#x27;</span>
+    <span class="k">action</span>: <span class="v">SIGKILL</span>
+    <span class="k">message</span>: <span class="s">&quot;GDPR: Contact PII detected — data must be pseudonymized or removed&quot;</span></pre>
+    <div class="note">Two families. The four sector starters (financial services, healthcare, K-12 education, general SaaS) are Agent Control Specification manifests bound to Rego bundles of about 220 lines each, whose rules carry OWASP Agentic Top 10 identifiers (ASI-01 prompt injection, ASI-02 tool misuse, ASI-03 identity abuse, and so on), with test fixtures. The fifteen kernel templates in agent-os (GDPR, HIPAA, PCI-DSS, SOX, data protection, multi-tenant, rate limiting, secure coding, and environment profiles) are pattern-based deny rules with a signal to raise: SIGSTOP pauses for a human, SIGKILL terminates. Both families are marked as starting points to customise, not production policies, and I found no loader for the kernel templates in the core package: wiring them in is the operator's job. The docs folder adds mappings rather than code: an EU AI Act checklist, an ISO 42001 mapping, a CIS Controls v8.1 mapping and an MCP OWASP Top 10 mapping.</div>
+  </div>
+
+  <p>Three things these files make visible. The sector templates are content, not mechanism: the same engine, a different Rego bundle per sector, which is how a regulated deployment starts. The audit is on by default and the arguments are off by default: <code>include_tool_args: false</code> is the repository's own advice, because arguments carry personal data. And the intent is not something you configure; it is something the agent declares at runtime, which is why it ends up in the audit entry and not in a YAML file. Part 5 follows those entries out of the process.</p>
+
+  <h2>What it does not do</h2>
+  <ul>
+    <li><strong>No Kubernetes admission.</strong> Nothing in the repository validates or mutates workloads at admission; the toolkit governs an agent that is already running. Kyverno or Gatekeeper keep that job.</li>
+    <li><strong>No console.</strong> The human surfaces are IDE and browser extensions, plus the notification channels. There is a dashboard API in the code, with no frontend behind it.</li>
+    <li><strong>Tenant isolation is partial.</strong> Policies can be scoped per organisation, but the services themselves are documented for single-tenant use.</li>
+    <li><strong>Intent lives in one module.</strong> It is in the agent-os package, not in the policy-engine core or in the language SDKs; if you use only the SDK, you get policy and audit, not intent.</li>
+    <li><strong>The audit tree has no external witness.</strong> The tree proves that the operator did not alter the log. It does not prove it to a third party; the code says explicitly that it does not anchor to a transparency log. Part 5 comes back to this.</li>
+  </ul>
+
+  <div class="gaps">
+    <p><strong>Net effect on the matrix of part 3.</strong> The human-oversight row gets a strong cell at the MCP gateway, and the intended-use row gets a strong cell in the agent runtime. Both are answered by open code, deployable on-premises, with no account at any vendor. What remains open is proof to an outsider, and that is the subject of part 5.</p>
+  </div>
+
+  <div class="cta">
+    <strong>Next in the series</strong>
+    <ol class="series">
+      <li><span><a href="../part-5/">Part 5</a></span>Observability: how it is proven. What OpenTelemetry, OCSF and MLflow record, what they cannot tell you, and why an audit tree needs a witness.</li>
+      <li><span><a href="../part-6/">Part 6</a></span>Rolling out a model blue/green: how the stack changes without breaking what parts 3 to 5 established.</li>
+    </ol>
+  </div>
+
+  <div class="notice"><strong>Read, not run.</strong> Everything in this series comes from reading public code and documents at a stated date, not from running them in production. Treat it as a map to test, not a result to trust: these projects move monthly, their bugs move with them, and a component marked preview or alpha here may be stable, or gone, by the time you read this. Test it on your own cluster. When something does not match, file the issue in the project's tracker and send the fix back: that is how open code improves, and it is the only way a map like this one stays true.</div>
+
+  <hr>
+  <div class="sources">
+    <strong>Sources</strong>
+    <ol>
+      <li><a href="https://github.com/microsoft/agent-governance-toolkit">microsoft/agent-governance-toolkit</a>, MIT, read at commit e7f5d2b (19 September 2026); files cited: <code>agent-governance-python/agent-os/src/agent_os/intent.py</code>, <code>agent-governance-python/agent-mesh/src/agentmesh/governance/approval_webhook.py</code>, <code>agent-governance-python/agent-mesh/src/agentmesh/governance/audit.py</code>, <code>policy-engine/policy/lib</code>, <code>policy-engine/policy/cedar-lib</code>, <code>examples/policy-templates/</code>, <code>agent-governance-python/agent-os/templates/policies/</code>, <code>docs/compliance/</code></li>
+      <li>Same repository at commit 2e98345 (21 September 2026), for the configuration excerpts: <code>policy-engine/examples/records_agent/manifest.yaml</code>, <code>policy-engine/core/schema/approval.schema.json</code>, <code>examples/policies/adk-agt-manifest.yaml</code>, <code>agent-governance-python/agent-os/src/agent_os/intent.py</code>, <code>examples/policy-templates/financial-services.yaml</code> and <code>rego/financial-services.rego</code>, <code>agent-governance-python/agent-os/templates/policies/gdpr.yaml</code></li>
+      <li><a href="https://opensource.microsoft.com/blog/2026/04/02/introducing-the-agent-governance-toolkit-open-source-runtime-security-for-ai-agents/">Introducing the Agent Governance Toolkit</a>, Microsoft Open Source Blog, 2 April 2026</li>
+      <li><a href="https://techcommunity.microsoft.com/blog/linuxandopensourceblog/agent-governance-toolkit-architecture-deep-dive-policy-engines-trust-and-sre-for/4510105">Agent Governance Toolkit: architecture deep dive</a>, Microsoft Community Hub</li>
+      <li><a href="https://github.com/Kuadrant/mcp-gateway">Kuadrant/mcp-gateway</a>, guardrail contract in <code>internal/guardrails/checker.go</code>; <a href="https://aigateway.envoyproxy.io/docs/capabilities/mcp/">Envoy AI Gateway, MCP</a></li>
+      <li><a href="https://github.com/Kuadrant/authorino">Kuadrant/authorino</a>, AuthConfig CRD: <code>opa.externalPolicy</code>, <code>http</code></li>
+    </ol>
+    <p>Independent work, not affiliated with Microsoft, Red Hat, NVIDIA or the CNCF. Product names belong to their owners. Views are my own and do not represent the position of my employer.</p>
+  </div>
+
+</div>
+
+</body>
+</html>

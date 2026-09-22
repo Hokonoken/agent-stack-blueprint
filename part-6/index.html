@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Part 6 of the open agent stack blueprint: Rolling out a model blue/green.">
+<title>Blue-Green Model Rollouts</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --ink:#131A24; --muted:#5A6675; --line:#D5DBE3; --band:#E9EDF3;
+  --cncf:#5B3FBF; --nv:#3F7D0B; --ms:#175CD3; --lf:#6B7480; --us:#C2410C;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1117; --surface:#151B24; --ink:#E6EBF2; --muted:#94A1B2; --line:#2A3340; --band:#1A222D;
+    --cncf:#B39DFF; --nv:#86CB3C; --ms:#84ADFF; --lf:#94A1B2; --us:#FB923C;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1117; --surface:#151B24; --ink:#E6EBF2; --muted:#94A1B2; --line:#2A3340; --band:#1A222D;
+  --cncf:#B39DFF; --nv:#86CB3C; --ms:#84ADFF; --lf:#94A1B2; --us:#FB923C;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.55;padding-inline:20px;padding-block:32px 56px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4.6vw,44px);font-weight:700;line-height:1.06;letter-spacing:-.01em}
+h2{font-size:23px;font-weight:600}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{max-width:72ch;color:var(--muted);margin:0}
+header{display:flex;flex-direction:column;gap:12px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:13px;color:var(--muted);padding:12px 0;border-block:1px solid var(--line)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{display:inline-block;width:22px;height:12px;border:2px solid var(--lf);background:var(--surface)}
+.sw.cncf{border-color:var(--nv)} .sw.nv{border-color:var(--nv)} .sw.ms{border-color:var(--ms);border-style:dashed} .sw.us{border-color:var(--us);border-width:3px}
+figure{margin:0;display:flex;flex-direction:column;gap:12px}
+.svgbox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);padding:10px}
+svg{display:block;min-width:1040px;width:100%;height:auto;color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif}
+svg .b rect{fill:var(--surface);stroke:var(--lf);stroke-width:1.4}
+svg .cncf rect{stroke:var(--cncf)} svg .nv rect{stroke:var(--nv)}
+svg .ms rect{stroke:var(--ms);stroke-dasharray:6 3}
+svg .us rect{stroke:var(--us);stroke-width:2.4}
+svg .t{font-size:13px;font-weight:600;fill:currentColor}
+svg .s{font-size:10.5px;fill:var(--muted)}
+svg .tag{font-size:9px;letter-spacing:.06em;font-family:"IBM Plex Mono",ui-monospace,monospace}
+svg .tc{fill:var(--cncf)} svg .tnv{fill:var(--nv)} svg .tms{fill:var(--ms)} svg .tlf{fill:var(--lf)} svg .tus{fill:var(--us)}
+svg .frame{fill:var(--band);stroke:var(--line);stroke-width:1}
+svg .pod{fill:none;stroke:var(--nv);stroke-width:1.6;stroke-dasharray:7 4}
+svg .agt{fill:none;stroke:var(--ms);stroke-width:1.4;stroke-dasharray:6 3}
+svg .cap{font-size:10.5px;letter-spacing:.07em;font-weight:600}
+svg .lbl{font-size:10.5px;fill:var(--muted)}
+svg .flow{fill:none;stroke:currentColor;stroke-width:1.3}
+svg .msflow{fill:none;stroke:var(--ms);stroke-width:1.4;stroke-dasharray:5 3}
+svg .tr{fill:none;stroke:var(--muted);stroke-width:1.1;stroke-dasharray:2 4}
+svg .mfill{fill:var(--ms)} svg .tfill{fill:var(--muted)}
+svg .bar rect{fill:var(--band);stroke:var(--line)}
+svg .mat{font-size:9px;font-style:italic;fill:var(--muted)}
+svg .svc{fill:none;stroke:var(--line);stroke-width:1.6;stroke-dasharray:3 3}
+svg .blue rect{fill:var(--surface);stroke:var(--ms);stroke-width:1.8}
+svg .green rect{fill:var(--surface);stroke:var(--nv);stroke-width:1.8}
+svg .tblue{fill:var(--ms)} svg .tgreen{fill:var(--nv)}
+svg .wflow{fill:none;stroke:var(--nv);stroke-width:2.2}
+svg .wflow2{fill:none;stroke:var(--ms);stroke-width:2.2}
+svg .shadow{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3}
+svg .gate rect{fill:var(--band);stroke:var(--us);stroke-width:1.6}
+svg .ghost rect{fill:var(--surface);stroke:var(--cncf);stroke-width:1.2;stroke-dasharray:5 3}
+figcaption code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+figcaption{max-width:78ch;color:var(--muted);font-size:14px}
+figcaption a{color:var(--us)}
+svg a{cursor:pointer}
+section{display:flex;flex-direction:column;gap:14px}
+.tblbox{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:800px;font-size:13.5px}
+th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:10px;border-bottom:1px solid var(--line);background:var(--band)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td:first-child{font-weight:600;white-space:nowrap}
+td code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+.caveats{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));border:1px solid var(--line);background:var(--surface)}
+.cv{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.cv h3{font-size:17px;font-weight:600}
+.cv p{margin:0;font-size:14px}
+footer{font-size:12.5px;color:var(--muted);max-width:88ch}
+footer a{color:inherit}
+
+.post{max-width:76ch;margin:0 auto;display:flex;flex-direction:column;gap:22px;font-size:16.5px;line-height:1.6}
+.post h1{font-size:clamp(30px,5vw,46px)}
+.post h2{margin-top:10px}
+.post p{margin:0}
+.post ul,.post ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.meta{font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+.kicker{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cncf)}
+.takeaways{border:1px solid var(--line);background:var(--surface);padding:18px 22px;display:flex;flex-direction:column;gap:10px}
+.takeaways h3{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.takeaways ol{font-size:15.5px}
+.quote{border-left:3px solid var(--rh);padding:8px 18px;display:flex;flex-direction:column;gap:8px}
+.quote blockquote{margin:0;font-size:18px;font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;font-weight:500}
+.quote span{font-size:13.5px;color:var(--muted)}
+.cta{border:2px solid var(--us);padding:18px 22px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.cta strong{color:var(--us)}
+.series{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:15.5px}
+.series li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:baseline}
+.series li span a{color:inherit;text-decoration:none}
+.series li span a:hover{text-decoration:underline}
+.series li span{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--us);white-space:nowrap}
+.fig{display:flex;flex-direction:column;gap:10px}
+.fig .svgbox{padding:8px}
+.fig figcaption{font-size:13.5px}
+.wide{max-width:1280px;margin:0 auto;width:100%}
+.sources{font-size:13.5px;color:var(--muted)}
+.sources ol{gap:4px}
+.sources a{color:inherit}
+hr{border:0;border-top:1px solid var(--line);margin:8px 0}
+
+.tblbox{margin:0}
+
+.replsec{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.replsec h2{margin:0}
+table.repl{min-width:900px;font-size:14px;table-layout:fixed}
+table.repl col.c1{width:15%} table.repl col.c2{width:21%} table.repl col.c3{width:28%} table.repl col.c4{width:15%} table.repl col.c5{width:21%}
+table.repl th{padding:12px 14px}
+table.repl td{padding:11px 14px;line-height:1.4;vertical-align:top}
+table.repl td:first-child{white-space:normal;font-weight:600}
+table.repl tbody tr:nth-child(even) td{background:color-mix(in srgb, var(--band) 55%, transparent)}
+table.repl td:nth-child(3){color:var(--ink)}
+table.repl td:nth-child(2),table.repl td:nth-child(4),table.repl td:nth-child(5){color:var(--muted)}
+
+.law{border:1px solid var(--line);background:var(--surface);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.law > div.span{grid-column:1/-1}
+.law > div.span ul{columns:2;column-gap:28px}
+.law > div.span ul li{break-inside:avoid}
+.law > div{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.law h3{font-size:16px;font-weight:600}
+.law .when{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--cncf);letter-spacing:.04em}
+.law p{margin:0;font-size:14px}
+.law ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.gaps{border-left:3px solid var(--us);padding:8px 18px;display:flex;flex-direction:column;gap:10px}
+.gaps p{margin:0}
+.notice{font-size:13.5px;color:var(--muted);border:1px dashed var(--line);padding:10px 14px}
+
+.qa{border:1px solid var(--line);background:var(--surface)}
+.qa table{min-width:0;table-layout:fixed}
+.qa col.q{width:34%} .qa col.r{width:38%} .qa col.g{width:28%}
+.qa td:first-child{white-space:normal}
+.qa td:nth-child(3){color:var(--muted)}
+.quote{border-left:3px solid var(--cncf)}
+
+.cfgblock{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.cfgblock > strong{padding:12px 16px 10px;font-size:15px;border-bottom:1px solid var(--line)}
+.cfgblock .src{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 16px;background:var(--band);font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--muted);border-bottom:1px solid var(--line)}
+.cfgblock .src b{font-weight:500;color:var(--ink)}
+pre.cfg{margin:0;padding:14px 16px;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;tab-size:2}
+pre.cfg .c{color:var(--muted);font-style:italic}
+pre.cfg .k{color:var(--cncf);font-weight:500}
+pre.cfg .v{color:var(--ink)}
+pre.cfg .s{color:var(--nv)}
+pre.cfg .n{color:var(--ms)}
+.cfgblock .note{padding:10px 16px;font-size:13.5px;color:var(--muted);border-top:1px solid var(--line)}
+
+.rules{border:1px solid var(--line);background:var(--surface);display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.rules > div{padding:14px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.rules h3{font-size:16px;font-weight:600}
+.rules p{margin:0;font-size:14px}
+.sn{max-width:76ch;margin:0 auto 18px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.04em;color:var(--muted)}
+.sn a{color:var(--us);text-decoration:none}
+.sn a:hover,.sn a:focus-visible{text-decoration:underline;outline:none}
+body{margin:0}
+</style>
+</head>
+<body>
+<nav class="sn"><a href="../part-5/">&larr; Part 5</a><a href="../">All six parts</a><a href="../">Back to the index</a></nav>
+<div class="post">
+  <span class="kicker">Blueprint · part 6 of 6 · draft for review</span>
+  <h1>Rolling out a model blue/green: changing the stack without breaking what parts 3 to 5 established</h1>
+  <p class="lede">A model is the component that changes most often and that the regulations watch most closely: new weights, a new quantization, a new inference engine. This last part shows how a new version enters production on the stack of parts 1 and 2, with the two properties the previous parts demand: nothing in the evidence chain breaks during the switch, and no human signs blind.</p>
+  <div class="meta"><span>Draft · September 2026</span><span>Reading time: 9 min</span><span>Views are my own, not my employer's</span></div>
+
+  <div class="takeaways">
+    <h3>Three things to take away</h3>
+    <ol>
+      <li><strong>Two pools behind one name.</strong> On this stack, a rollout is two llm-d InferencePools and one HTTPRoute whose weights move. The agents keep calling the same model name; the version behind it changes without any client touching its configuration.</li>
+      <li><strong>The gate is the regulation, run as an analysis.</strong> Article 15 asks for accuracy metrics; article 9 for testing "against prior defined metrics"; FINMA for backtests and adversarial tests before and after changes. Argo Rollouts can run exactly that as an AnalysisRun, from Prometheus, from garak's probes and from replayed test sets, before the weights move.</li>
+      <li><strong>A model is not a stateless service.</strong> Two copies cost two GPUs, loading takes minutes, and quality is not a status code. Blue stays warm for rollback, green is warmed before it sees a request, and the judge of a quality test is never the candidate itself.</li>
+    </ol>
+  </div>
+
+  <h2>Why blue/green and not a rolling update</h2>
+  <p>A rolling update replaces pods one by one and assumes any pod can take any request. A model version is not interchangeable with the previous one: its answers differ, its refusals differ, its cost per token differs. What you want is a period where both versions run, the new one can be examined under real traffic without answering anyone, and the switch is a single reversible change. That is blue/green, and the inference extension of the Gateway API was designed for it: an InferencePool per version, an HTTPRoute with weights, and a rollback that is a weight set back to one hundred.</p>
+</div>
+
+<figure class="fig wide">
+  <div class="svgbox">
+  <svg viewBox="0 0 1180 500" role="img" aria-label="Blue/green rollout of a model. Agents call a stable model name. The inference gateway's HTTPRoute splits traffic between a blue InferencePool, the current version, and a green one, the candidate, both made of vLLM pods. The candidate comes from the model registry through Git and Argo CD. Green first receives mirrored traffic, then an Argo Rollouts analysis runs measurements and replayed test sets; a human promotes, the weights move in steps, blue stays warm for rollback.">
+<defs><marker id="r6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker><marker id="r6g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="tgreen"/></marker><marker id="r6b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="tblue"/></marker><marker id="r6s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="tfill"/></marker></defs>
+<g class="b"><rect x="20" y="150" width="160" height="70"/><text class="t" x="100" y="176" text-anchor="middle">Agents · gateway</text><text class="s" x="100" y="194" text-anchor="middle">call "gpt-oss-120b"</text><text class="s" x="100" y="210" text-anchor="middle">the name never changes</text></g>
+<g class="b cncf"><rect x="240" y="140" width="200" height="90"/><text class="t" x="340" y="166" text-anchor="middle">Inference gateway</text><text class="s" x="340" y="184" text-anchor="middle">Gateway API · inference extension</text><text class="s" x="340" y="202" text-anchor="middle">HTTPRoute: blue / green weights</text><text class="s" x="340" y="218" text-anchor="middle">llm-d picks the pod</text><text class="tag tc" x="432" y="223" text-anchor="end">CNCF</text></g>
+<g class="blue"><rect x="520" y="40" width="250" height="92"/><text class="t" x="645" y="64" text-anchor="middle">BLUE pool · current version</text><text class="s" x="645" y="82" text-anchor="middle">llm-d InferencePool · vLLM pods on GPU</text><text class="s" x="645" y="100" text-anchor="middle">weight 100 → 90 → 50 → 0</text><text class="s tblue" x="645" y="118" text-anchor="middle">stays warm 24 h after the switch</text></g>
+<g class="green"><rect x="520" y="230" width="250" height="92"/><text class="t" x="645" y="254" text-anchor="middle">GREEN pool · candidate</text><text class="s" x="645" y="272" text-anchor="middle">llm-d InferencePool · vLLM pods on GPU</text><text class="s" x="645" y="290" text-anchor="middle">new weights, quantization or vLLM</text><text class="s tgreen" x="645" y="308" text-anchor="middle">warmed up · weight 0 → 10 → 50 → 100</text></g>
+<g class="gate"><rect x="836" y="196" width="334" height="150"/><text class="cap tus" x="852" y="218">GATE · ARGO ROLLOUTS ANALYSIS</text><text class="s" x="852" y="240" fill="currentColor">Prometheus: p95, errors, refusals, GPU seconds</text><text class="s" x="852" y="258" fill="currentColor">Jobs: golden prompts, garak probes, policy set</text><text class="s" x="852" y="276" fill="currentColor">criteria written first (art. 9, 15; FINMA §2.4)</text><text class="s" x="852" y="294" fill="currentColor">any failure: rollout aborted, blue untouched</text><text class="s tus" x="852" y="316">a person promotes; approval recorded (art. 14)</text><text class="s tus" x="852" y="334">and the model card is updated (art. 11)</text></g>
+<g class="ghost"><rect x="850" y="52" width="310" height="70"/><text class="t" x="1005" y="76" text-anchor="middle">Model registry · Git · Argo CD</text><text class="s" x="1005" y="94" text-anchor="middle">the candidate is declared, image signed,</text><text class="s" x="1005" y="110" text-anchor="middle">Argo CD creates the green pool</text></g>
+<g class="flow"><line x1="180" y1="185" x2="238" y2="185" marker-end="url(#r6)"/></g>
+<g class="wflow2"><polyline points="440,165 480,165 480,86 518,86" marker-end="url(#r6b)"/></g>
+<g class="wflow"><polyline points="440,205 480,205 480,276 518,276" marker-end="url(#r6g)"/></g>
+<g class="shadow"><polyline points="645,132 645,180 700,180 700,228" marker-end="url(#r6s)"/></g>
+<g class="shadow"><line x1="770" y1="276" x2="848" y2="276" marker-end="url(#r6s)"/></g>
+<g class="shadow"><polyline points="1005,122 1005,160 780,160 780,228" marker-end="url(#r6s)"/></g>
+<g class="wflow"><polyline points="850,346 800,346 800,392 340,392 340,232" marker-end="url(#r6g)"/></g>
+<text class="lbl" x="209" y="178" text-anchor="middle">request</text>
+<text class="lbl tblue" x="458" y="78" text-anchor="middle">blue</text>
+<text class="lbl tgreen" x="458" y="292" text-anchor="middle">green</text>
+<text class="lbl" x="708" y="176">shadow: mirrored traffic, answers never served</text>
+<text class="lbl" x="809" y="269" text-anchor="middle">measured</text>
+<text class="lbl" x="892" y="154">deploys</text>
+<text class="lbl tgreen" x="570" y="408">promotion: Argo Rollouts moves the HTTPRoute weights in steps · rollback = blue back to 100, in seconds</text>
+<g class="bar"><rect x="20" y="424" width="1140" height="60"/><text class="s" x="36" y="446">Products: Envoy Gateway or Kuadrant + Gateway API inference extension (route, weights) · llm-d (pools, pod choice) · vLLM (engine) · KServe (lifecycle)</text><text class="s" x="36" y="464">· Kubeflow or OpenShift AI model registry · Argo CD and Argo Rollouts · cosign · Prometheus, DCGM · NeMo Guardrails, Agent Governance Toolkit (replayed sets)</text></g>
+</svg>
+  </div>
+  <figcaption>Two llm-d pools behind one HTTPRoute. Green starts at zero, receives mirrored traffic, passes the analysis, then takes requests in steps while blue stays warm. The orange box is the gate: measurements and replayed sets, criteria written before the run, a person who promotes and whose approval is recorded. Mechanism documented by llm-d for gateway mode; on classic KServe, the equivalent is the canary via <code>canaryTrafficPercent</code>, in serverless mode only.</figcaption>
+</figure>
+
+<div class="post">
+  <h2>The route, in the stack's own vocabulary</h2>
+  <div class="cfgblock">
+    <strong>The HTTPRoute that carries the switch</strong>
+    <div class="src"><span><b>HTTPRoute · Gateway API inference extension</b></span><span>YAML</span></div>
+    <pre class="cfg"><span class="c"># Gateway API HTTPRoute in front of two llm-d InferencePools: the model name the agents</span>
+<span class="c"># call stays the same; only the weights move (llm-d &quot;Blue-Green Update&quot;, gateway mode)</span>
+<span class="k">apiVersion</span>: <span class="v">gateway.networking.k8s.io/v1</span>
+<span class="k">kind</span>: <span class="v">HTTPRoute</span>
+<span class="k">metadata</span>:
+  <span class="k">name</span>: <span class="v">gpt-oss-120b</span>
+<span class="k">spec</span>:
+  <span class="k">parentRefs</span>:
+    - <span class="k">name</span>: <span class="v">inference-gateway</span>
+  <span class="k">rules</span>:
+    - <span class="k">backendRefs</span>:
+        - <span class="k">group</span>: <span class="v">inference.networking.x-k8s.io</span>
+          <span class="k">kind</span>: <span class="v">InferencePool</span>
+          <span class="k">name</span>: <span class="v">vllm-gpt-oss-120b</span><span class="c">          # blue, the version in production</span>
+          <span class="k">weight</span>: <span class="n">90</span>
+        - <span class="k">group</span>: <span class="v">inference.networking.x-k8s.io</span>
+          <span class="k">kind</span>: <span class="v">InferencePool</span>
+          <span class="k">name</span>: <span class="v">vllm-gpt-oss-120b-new</span><span class="c">      # green, the candidate</span>
+          <span class="k">weight</span>: <span class="n">10</span></pre>
+    <div class="note">Shape from the llm-d "Blue-Green Update" procedure and the Gateway API inference extension: two InferencePools, one route, weights that sum to 100. llm-d documents this for its gateway mode and advises keeping the original pool and nodes during the rollout for rollback.</div>
+  </div>
+
+  <h2>The analysis before promotion</h2>
+  <p>Argo Rollouts, shipped with OpenShift GitOps and available on any Kubernetes, runs an <em>AnalysisRun</em> at the steps of a rollout and aborts it if a metric fails. Two providers matter here. The Prometheus provider reads what the stack already exports: vLLM latency and throughput, gateway error and refusal rates, DCGM GPU seconds. The Job provider runs a container, which is how replayed test sets fit in: a golden prompt set with reference answers, garak's adversarial probes fired at the candidate through the content guardrails, a set of recorded tool-call scenarios through the agent harness with the governance policies of part 4. Each returns pass or fail.</p>
+  <div class="cfgblock">
+    <strong>An AnalysisTemplate with both providers</strong>
+    <div class="src"><span><b>AnalysisTemplate · Argo Rollouts</b></span><span>YAML</span></div>
+    <pre class="cfg"><span class="c"># Argo Rollouts AnalysisTemplate: the checks a Rollout runs before it is allowed to move</span>
+<span class="c"># the weights. Two providers: prometheus for measurements, job for replayed test sets.</span>
+<span class="k">apiVersion</span>: <span class="v">argoproj.io/v1alpha1</span>
+<span class="k">kind</span>: <span class="v">AnalysisTemplate</span>
+<span class="k">metadata</span>:
+  <span class="k">name</span>: <span class="v">model-candidate-gate</span>
+<span class="k">spec</span>:
+  <span class="k">args</span>:
+    - <span class="k">name</span>: <span class="v">candidate</span><span class="c">                       # the green pool</span>
+  <span class="k">metrics</span>:
+    - <span class="k">name</span>: <span class="v">p95-latency-vs-blue</span>
+      <span class="k">provider</span>:
+        <span class="k">prometheus</span>:
+          <span class="k">address</span>: <span class="v">http://prometheus:9090</span>
+          <span class="k">query</span>: <span class="s">|</span>
+            histogram_quantile(0.95, sum(rate(vllm:e2e_request_latency_seconds_bucket{pool=&quot;{{args.candidate}}&quot;}[10m])) by (le))
+            / histogram_quantile(0.95, sum(rate(vllm:e2e_request_latency_seconds_bucket{pool=&quot;blue&quot;}[10m])) by (le))
+      <span class="k">successCondition</span>: <span class="v">result[0] &lt;= 1.10</span><span class="c">   # no worse than blue plus 10 %</span>
+      <span class="k">failureLimit</span>: <span class="n">0</span>
+    - <span class="k">name</span>: <span class="v">golden-set-score</span>
+      <span class="k">provider</span>:
+        <span class="k">job</span>:
+          <span class="k">spec</span>:
+            <span class="k">template</span>:
+              <span class="k">spec</span>:
+                <span class="k">restartPolicy</span>: <span class="v">Never</span>
+                <span class="k">containers</span>:
+                  - <span class="k">name</span>: <span class="v">eval</span>
+                    <span class="k">image</span>: <span class="v">registry.example.internal/model-eval:1.4</span><span class="c">   # signed with cosign</span>
+                    <span class="k">args</span>: <span class="v">[&quot;--target&quot;, &quot;{{args.candidate}}&quot;, &quot;--set&quot;, &quot;golden-v12&quot;, &quot;--judge&quot;, &quot;not-the-candidate&quot;]</span>
+      <span class="k">successCondition</span>: <span class="v">result == &quot;pass&quot;</span>
+      <span class="k">failureLimit</span>: <span class="n">0</span>
+    - <span class="k">name</span>: <span class="v">adversarial-probes</span>
+      <span class="k">provider</span>:
+        <span class="k">job</span>:
+          <span class="k">spec</span>:
+            <span class="k">template</span>:
+              <span class="k">spec</span>:
+                <span class="k">restartPolicy</span>: <span class="v">Never</span>
+                <span class="k">containers</span>:
+                  - <span class="k">name</span>: <span class="v">garak</span>
+                    <span class="k">image</span>: <span class="v">registry.example.internal/garak:0.17.0</span><span class="c">   # NVIDIA garak, Apache 2.0</span>
+                    <span class="k">env</span>:
+                      - <span class="k">name</span>: <span class="v">OPENAICOMPATIBLE_API_KEY</span>
+                        <span class="k">valueFrom</span>: <span class="v">{ secretKeyRef: { name: gateway-eval-key, key: token } }</span>
+                    <span class="k">command</span>: <span class="v">[&quot;sh&quot;, &quot;-ec&quot;]</span>
+                    <span class="k">args</span>:
+                      - <span class="s">|</span>
+                        <span class="c"># target: the candidate pool, through the gateway, guardrails in front</span>
+                        python -m garak --target_type openai.OpenAICompatible \
+                          --target_name gpt-oss-120b --report_prefix {{args.candidate}} \
+                          --generator_options &#x27;{&quot;openai&quot;: {&quot;OpenAICompatible&quot;:
+                            {&quot;uri&quot;: &quot;https://gateway.internal/pools/{{args.candidate}}/v1/&quot;}}}&#x27; \
+                          --spec probes.promptinject,probes.latentinjection,probes.encoding,\
+                            probes.sysprompt_extraction,probes.leakreplay
+                        <span class="c"># garak exits 0 with or without hits: the verdict is the diff against blue</span>
+                        compare-hits --candidate {{args.candidate}}.report.jsonl \
+                          --baseline blue.report.jsonl --allow-new-hits 0
+      <span class="k">successCondition</span>: <span class="v">result == &quot;pass&quot;</span>
+      <span class="k">failureLimit</span>: <span class="n">0</span>
+    <div class="note">Illustrative: the metric names follow vLLM's Prometheus exporter, the images, the set names and the <code>compare-hits</code> step are placeholders; the garak flags, probe families and environment variable are the tool's own. What matters is the shape: a criterion per check, written before the run, with failureLimit zero so that one failure aborts the rollout.</div>
+  </div>
+
+  <h2>What the analysis must contain, and why</h2>
+  <div class="rules">
+    <div><h3>Measurements under mirrored traffic</h3><p>p95 latency and time to first token, error and refusal rates, GPU seconds per request, compared with blue over the same window. Article 15 asks for "an appropriate level of accuracy, robustness and cybersecurity" maintained throughout the lifecycle; FINMA §2.4 asks for performance indicators "defined in advance".</p></div>
+    <div><h3>A golden prompt set</h3><p>A fixed set of prompts with reference answers, versioned with the policies, scored on green and blue with the same rubric. Article 9(6) asks for testing "against prior defined metrics and probabilistic thresholds". If a model scores the answers, it must not be the candidate: a model grading itself is not a test.</p></div>
+    <div><h3>Adversarial probes, with garak</h3><p>garak is NVIDIA's open-source LLM vulnerability scanner (Apache 2.0, v0.17.0 in September 2026): probe families for prompt injection, injections buried in documents, system-prompt extraction, encoding tricks, jailbreaks and training-data leakage, each with its detector, aimed at any OpenAI-compatible endpoint. Fired at green through the gateway, guardrails in front, it tests the pair that will be in production. It writes a JSONL report and a hit log; the run on blue is the baseline, and the criterion is zero new hits. This is article 15(5)'s "adversarial examples" and "model evasion", and FINMA's tests "before and after changes", run rather than assumed. The report stays with the rollout, for the auditor's table of part 5.</p></div>
+    <div><h3>Policy set through the agent</h3><p>Recorded tool-call scenarios run through the harness with green as the model and the same policies: the ones that must be refused are refused, the ones that must succeed still succeed. A model that refuses everything fails this check too. This is how a model change is checked against part 4 rather than around it.</p></div>
+    <div><h3>Cost known before promotion</h3><p>Tokens and GPU seconds per request from the shadow window, against the budget set for the model name. Not a regulatory row, but the one that gets a rollout reversed a week later if it is skipped.</p></div>
+    <div><h3>A person promotes, and it is recorded</h3><p>The Rollout pauses before the weights move; the six results and the diff against blue are in front of whoever resumes it. Article 14 asks for the ability to intervene and interrupt; article 26(2) for authority; article 11 for documentation kept up to date, so the model card changes in the same step.</p></div>
+  </div>
+
+  <h2>The invariants during the switch</h2>
+  <ul>
+    <li><strong>The model name never changes.</strong> The agents, the MaaS keys and quotas, the policies that name the model: none of them move. The version is a pool label, not a client setting.</li>
+    <li><strong>The policies travel with the model.</strong> Green is tested with the policy set that will be in force when it is promoted, never with the old one, or the analysis proves nothing about production.</li>
+    <li><strong>The records of part 5 continue across the switch.</strong> Traces, the tool-call log, the verdicts and the OCSF events all carry which pool served the request. An auditor can tell, for any call in the six-month window, which model version answered it.</li>
+    <li><strong>Rollback is a weight, not a redeployment.</strong> Blue stays loaded for a day. Setting its weight back to one hundred takes seconds and needs no approval beyond the on-call engineer's, because it restores the version that was already approved.</li>
+  </ul>
+
+  <h2>Two things to check on your cluster, not on paper</h2>
+  <p><strong>Which serving mode you are on.</strong> The two-pool rollout above is llm-d in gateway mode. On classic KServe, the canary via <code>canaryTrafficPercent</code> is documented for serverless mode; in RawDeployment mode, doing the same through HTTPRoute weights is an open request in the KServe project as of September 2026. Open Data Hub and OpenShift AI can be configured either way, so this is the first thing to find out.</p>
+  <p><strong>Whether your ingress can mirror traffic.</strong> The shadow phase assumes the gateway can copy requests to green without serving its answers. Envoy can; whether your chart exposes it is another matter. If it does not, replaying recorded prompts against green is a weaker but honest substitute, and it is what the Job provider runs anyway.</p>
+
+  <div class="gaps">
+    <p><strong>Where this leaves the series.</strong> Part 1 drew the stack, part 2 rebuilt it from open projects, part 3 read what the regulations ask, part 4 showed how a governance toolkit enforces it, part 5 what gets recorded and what cannot be proven, and this part how the stack changes without losing any of it. Every component named is public and open. What is not in any of them, and what every one of the six parts ran into, is the same three things: a surface where a human oversees and approves, the local regulatory regime as content, and proof to an outsider. Those are not products yet. They are where the work is.</p>
+  </div>
+
+  <div class="cta">
+    <strong>The series</strong>
+    <ol class="series">
+      <li><span><a href="../part-1/">Part 1</a></span>AI agents on OpenShift: the open blueprint, layer by layer.</li>
+      <li><span><a href="../part-2/">Part 2</a></span>The same architecture in CNCF, NVIDIA and Microsoft projects, without a subscription.</li>
+      <li><span><a href="../part-3/">Part 3</a></span>What the regulations actually ask for (EU AI Act, NIS2, ISO 42001, Swiss FADP and FINMA), and which layer of the stack has to answer.</li>
+      <li><span><a href="../part-4/">Part 4</a></span>Action governance with Microsoft's Agent Governance Toolkit: how those requirements are enforced, and where it plugs into this stack.</li>
+      <li><span><a href="../part-5/">Part 5</a></span>Observability: what the stack records about an agent, and what it cannot prove.</li>
+      <li><span><a href="../part-6/">Part 6</a></span>This part: rolling out a model blue/green without breaking what parts 3 to 5 established.</li>
+    </ol>
+  </div>
+
+  <div class="notice"><strong>Read, not run.</strong> Everything in this series comes from reading public code and documents at a stated date, not from running them in production. Treat it as a map to test, not a result to trust: these projects move monthly, their bugs move with them, and a component marked preview or alpha here may be stable, or gone, by the time you read this. Test it on your own cluster. When something does not match, file the issue in the project's tracker and send the fix back: that is how open code improves, and it is the only way a map like this one stays true.</div>
+
+  <hr>
+  <div class="sources">
+    <strong>Sources</strong>
+    <ol>
+      <li><a href="https://llm-d.ai/docs/0.8/operations/rollouts/blue-green-update">llm-d, Blue-Green Update</a> (gateway mode; two InferencePools, HTTPRoute weights, keep the original pool for rollback)</li>
+      <li><a href="https://gateway-api-inference-extension.sigs.k8s.io/">Gateway API Inference Extension</a>, InferencePool and endpoint picker</li>
+      <li><a href="https://kserve.github.io/website/docs/model-serving/predictive-inference/rollout-strategies/canary">KServe canary rollout</a>; <a href="https://github.com/kserve/kserve/issues/5335">kserve/kserve #5335</a>, canary weights in RawDeployment mode</li>
+      <li><a href="https://docs.redhat.com/en/documentation/red_hat_openshift_gitops/1.17/html/argo_rollouts/routing-traffic-by-using-argo-rollouts">Argo Rollouts in OpenShift GitOps</a>; Argo Rollouts documentation, AnalysisTemplate, Prometheus and Job providers</li>
+      <li><a href="https://github.com/NVIDIA/garak">NVIDIA/garak</a>, Apache 2.0, v0.17.0 (9 September 2026); probe families in <code>garak/probes/</code>, the OpenAI-compatible target in <code>garak/generators/openai.py</code>, <code>--spec</code> and <code>--generator_options</code> in <a href="https://reference.garak.ai/">reference.garak.ai</a></li>
+      <li><a href="https://artificialintelligenceact.eu/article/9/">EU AI Act, article 9</a>, <a href="https://artificialintelligenceact.eu/article/15/">article 15</a>, <a href="https://artificialintelligenceact.eu/article/14/">article 14</a>, <a href="https://artificialintelligenceact.eu/article/11/">article 11</a>; <a href="https://www.finma.ch/en/news/2024/12/20241218-mm-finma-am-08-24/">FINMA Guidance 08/2024</a>, section 2.4</li>
+    </ol>
+    <p>Independent work, not affiliated with the CNCF, Red Hat, NVIDIA or Microsoft. Product names belong to their owners. Views are my own and do not represent the position of my employer.</p>
+  </div>
+
+</div>
+
+</body>
+</html>

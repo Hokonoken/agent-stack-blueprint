@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Part 3 of the open agent stack blueprint: What the regulations actually ask of an agent stack.">
+<title>Agents and the Regulations</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --ink:#131A24; --muted:#5A6675; --line:#D5DBE3; --band:#E9EDF3;
+  --cncf:#5B3FBF; --nv:#3F7D0B; --ms:#175CD3; --lf:#6B7480; --us:#C2410C;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1117; --surface:#151B24; --ink:#E6EBF2; --muted:#94A1B2; --line:#2A3340; --band:#1A222D;
+    --cncf:#B39DFF; --nv:#86CB3C; --ms:#84ADFF; --lf:#94A1B2; --us:#FB923C;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1117; --surface:#151B24; --ink:#E6EBF2; --muted:#94A1B2; --line:#2A3340; --band:#1A222D;
+  --cncf:#B39DFF; --nv:#86CB3C; --ms:#84ADFF; --lf:#94A1B2; --us:#FB923C;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.55;padding-inline:20px;padding-block:32px 56px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4.6vw,44px);font-weight:700;line-height:1.06;letter-spacing:-.01em}
+h2{font-size:23px;font-weight:600}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{max-width:72ch;color:var(--muted);margin:0}
+header{display:flex;flex-direction:column;gap:12px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:13px;color:var(--muted);padding:12px 0;border-block:1px solid var(--line)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{display:inline-block;width:22px;height:12px;border:2px solid var(--lf);background:var(--surface)}
+.sw.cncf{border-color:var(--cncf)} .sw.nv{border-color:var(--nv)} .sw.ms{border-color:var(--ms);border-style:dashed} .sw.us{border-color:var(--us);border-width:3px}
+figure{margin:0;display:flex;flex-direction:column;gap:12px}
+.svgbox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);padding:10px}
+svg{display:block;min-width:1040px;width:100%;height:auto;color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif}
+svg .b rect{fill:var(--surface);stroke:var(--lf);stroke-width:1.4}
+svg .cncf rect{stroke:var(--cncf)} svg .nv rect{stroke:var(--nv)}
+svg .ms rect{stroke:var(--ms);stroke-dasharray:6 3}
+svg .us rect{stroke:var(--us);stroke-width:2.4}
+svg .t{font-size:13px;font-weight:600;fill:currentColor}
+svg .s{font-size:10.5px;fill:var(--muted)}
+svg .tag{font-size:9px;letter-spacing:.06em;font-family:"IBM Plex Mono",ui-monospace,monospace}
+svg .tc{fill:var(--cncf)} svg .tnv{fill:var(--nv)} svg .tms{fill:var(--ms)} svg .tlf{fill:var(--lf)} svg .tus{fill:var(--us)}
+svg .frame{fill:var(--band);stroke:var(--line);stroke-width:1}
+svg .pod{fill:none;stroke:var(--nv);stroke-width:1.6;stroke-dasharray:7 4}
+svg .agt{fill:none;stroke:var(--ms);stroke-width:1.4;stroke-dasharray:6 3}
+svg .cap{font-size:10.5px;letter-spacing:.07em;font-weight:600}
+svg .lbl{font-size:10.5px;fill:var(--muted)}
+svg .flow{fill:none;stroke:currentColor;stroke-width:1.3}
+svg .msflow{fill:none;stroke:var(--ms);stroke-width:1.4;stroke-dasharray:5 3}
+svg .tr{fill:none;stroke:var(--muted);stroke-width:1.1;stroke-dasharray:2 4}
+svg .mfill{fill:var(--ms)} svg .tfill{fill:var(--muted)}
+svg .bar rect{fill:var(--band);stroke:var(--line)}
+svg .mat{font-size:9px;font-style:italic;fill:var(--muted)}
+svg .svc{fill:none;stroke:var(--line);stroke-width:1.6;stroke-dasharray:3 3}
+svg .blue rect{fill:var(--surface);stroke:var(--ms);stroke-width:1.8}
+svg .green rect{fill:var(--surface);stroke:var(--nv);stroke-width:1.8}
+svg .tblue{fill:var(--ms)} svg .tgreen{fill:var(--nv)}
+svg .wflow{fill:none;stroke:var(--nv);stroke-width:2.2}
+svg .wflow2{fill:none;stroke:var(--ms);stroke-width:2.2}
+svg .shadow{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3}
+svg .gate rect{fill:var(--band);stroke:var(--us);stroke-width:1.6}
+svg .ghost rect{fill:var(--surface);stroke:var(--cncf);stroke-width:1.2;stroke-dasharray:5 3}
+figcaption code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+figcaption{max-width:78ch;color:var(--muted);font-size:14px}
+figcaption a{color:var(--us)}
+svg a{cursor:pointer}
+section{display:flex;flex-direction:column;gap:14px}
+.tblbox{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:800px;font-size:13.5px}
+th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:10px;border-bottom:1px solid var(--line);background:var(--band)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td:first-child{font-weight:600;white-space:nowrap}
+td code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+.caveats{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));border:1px solid var(--line);background:var(--surface)}
+.cv{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.cv h3{font-size:17px;font-weight:600}
+.cv p{margin:0;font-size:14px}
+footer{font-size:12.5px;color:var(--muted);max-width:88ch}
+footer a{color:inherit}
+
+.post{max-width:76ch;margin:0 auto;display:flex;flex-direction:column;gap:22px;font-size:16.5px;line-height:1.6}
+.post h1{font-size:clamp(30px,5vw,46px)}
+.post h2{margin-top:10px}
+.post p{margin:0}
+.post ul,.post ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.meta{font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+.kicker{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cncf)}
+.takeaways{border:1px solid var(--line);background:var(--surface);padding:18px 22px;display:flex;flex-direction:column;gap:10px}
+.takeaways h3{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.takeaways ol{font-size:15.5px}
+.quote{border-left:3px solid var(--rh);padding:8px 18px;display:flex;flex-direction:column;gap:8px}
+.quote blockquote{margin:0;font-size:18px;font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;font-weight:500}
+.quote span{font-size:13.5px;color:var(--muted)}
+.cta{border:2px solid var(--us);padding:18px 22px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.cta strong{color:var(--us)}
+.series{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:15.5px}
+.series li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:baseline}
+.series li span a{color:inherit;text-decoration:none}
+.series li span a:hover{text-decoration:underline}
+.series li span{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--us);white-space:nowrap}
+.fig{display:flex;flex-direction:column;gap:10px}
+.fig .svgbox{padding:8px}
+.fig figcaption{font-size:13.5px}
+.wide{max-width:1280px;margin:0 auto;width:100%}
+.sources{font-size:13.5px;color:var(--muted)}
+.sources ol{gap:4px}
+.sources a{color:inherit}
+hr{border:0;border-top:1px solid var(--line);margin:8px 0}
+
+.tblbox{margin:0}
+
+.replsec{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.replsec h2{margin:0}
+table.repl{min-width:900px;font-size:14px;table-layout:fixed}
+table.repl col.c1{width:15%} table.repl col.c2{width:21%} table.repl col.c3{width:28%} table.repl col.c4{width:15%} table.repl col.c5{width:21%}
+table.repl th{padding:12px 14px}
+table.repl td{padding:11px 14px;line-height:1.4;vertical-align:top}
+table.repl td:first-child{white-space:normal;font-weight:600}
+table.repl tbody tr:nth-child(even) td{background:color-mix(in srgb, var(--band) 55%, transparent)}
+table.repl td:nth-child(3){color:var(--ink)}
+table.repl td:nth-child(2),table.repl td:nth-child(4),table.repl td:nth-child(5){color:var(--muted)}
+
+.law{border:1px solid var(--line);background:var(--surface);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.law > div.span{grid-column:1/-1}
+.law > div.span ul{columns:2;column-gap:28px}
+.law > div.span ul li{break-inside:avoid}
+.law > div{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.law h3{font-size:16px;font-weight:600}
+.law .when{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--cncf);letter-spacing:.04em}
+.law p{margin:0;font-size:14px}
+.law ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.gaps{border-left:3px solid var(--us);padding:8px 18px;display:flex;flex-direction:column;gap:10px}
+.gaps p{margin:0}
+.notice{font-size:13.5px;color:var(--muted);border:1px dashed var(--line);padding:10px 14px}
+.sn{max-width:76ch;margin:0 auto 18px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.04em;color:var(--muted)}
+.sn a{color:var(--us);text-decoration:none}
+.sn a:hover,.sn a:focus-visible{text-decoration:underline;outline:none}
+body{margin:0}
+</style>
+</head>
+<body>
+<nav class="sn"><a href="../part-2/">&larr; Part 2</a><a href="../">All six parts</a><a href="../part-4/">Part 4 &rarr;</a></nav>
+<div class="post">
+  <span class="kicker">Blueprint · part 3 of 6 · draft for review</span>
+  <h1>What the regulations actually ask of an agent stack, and which layer has to answer</h1>
+  <p class="lede">Parts 1 and 2 drew the stack. Before deciding how to govern it, it is worth reading what the law asks, in the text, not in the vendor slide. Five sources matter for a European or Swiss deployment: the EU AI Act as amended in July 2026, NIS2, ISO/IEC 42001, the Swiss Data Protection Act, and FINMA's guidance for financial institutions. Most of what they ask is about records and control, not about the model.</p>
+  <div class="meta"><span>Draft · September 2026</span><span>Reading time: 9 min</span><span>Not legal advice · Views are my own, not my employer's</span></div>
+
+  <div class="takeaways">
+    <h3>Three things to take away</h3>
+    <ol>
+      <li><strong>The obligations are mostly about evidence and control.</strong> Logs kept for at least six months, a documented risk process, a person who can override or stop the system, an inventory with a risk class, incidents reported on a clock. The model's quality matters, but the texts spend more words on what surrounds it.</li>
+      <li><strong>The dates moved this summer, but not all of them.</strong> Regulation (EU) 2026/1744 pushed the high-risk obligations to 2 December 2027 (Annex III) and 2 August 2028 (Annex I). The transparency duties of Article 50 did not move: since 2 August 2026, people must be told they are talking to an AI.</li>
+      <li><strong>Two demands have no box in the stack from parts 1 and 2.</strong> A surface where the human oversight of Article 14 actually happens, and a way to enforce "intended use only" (ISO 42001 A.9.4) at the level of a task. Part 4 is about that.</li>
+    </ol>
+  </div>
+
+  <h2>The five texts in one page</h2>
+  <p>Each entry gives the article, the wording that matters, and the date it applies. Quotations are from the official English texts; where a text has no English version, the Swiss FADP for instance, the quotation is from the Federal Council's unofficial translation on Fedlex.</p>
+</div>
+
+<section class="wide" style="display:flex;flex-direction:column;gap:14px">
+  <div class="law">
+    <div class="span">
+      <h3>EU AI Act, Regulation 2024/1689, amended by 2026/1744</h3>
+      <span class="when">High-risk: 2 Dec 2027 (Annex III) · 2 Aug 2028 (Annex I) · Art. 50: since 2 Aug 2026</span>
+      <ul>
+        <li><strong>Art. 12</strong>: high-risk systems "shall technically allow for the automatic recording of events (logs) over the lifetime of the system", for traceability and post-market monitoring.</li>
+        <li><strong>Art. 26(6)</strong>: deployers keep those logs "for a period appropriate to the intended purpose… of at least six months".</li>
+        <li><strong>Art. 14(4)</strong>: the overseer can "decide, in any particular situation, not to use" the system, "disregard, override or reverse the output", and "intervene in the operation or interrupt the system through a 'stop' button or a similar procedure".</li>
+        <li><strong>Art. 26(2)</strong>: oversight is assigned "to natural persons who have the necessary competence, training and authority".</li>
+        <li><strong>Art. 9</strong>: a risk management system "established, implemented, documented and maintained", "a continuous iterative process" over the lifecycle, with testing "against prior defined metrics".</li>
+        <li><strong>Art. 15</strong>: "resilient against attempts by unauthorised third parties to alter their use, outputs or performance"; the text names data poisoning, model poisoning, adversarial examples, model evasion and confidentiality attacks.</li>
+        <li><strong>Art. 11</strong>: technical documentation "drawn up before that system is placed on the market" and "kept up-to date".</li>
+        <li><strong>Art. 72, 73</strong>: a post-market monitoring plan; serious incidents reported within 15 days, 2 days for critical infrastructure, 10 days when a death is involved.</li>
+        <li><strong>Art. 50</strong>: providers design systems so that people are told they interact with an AI "at the latest at the time of the first interaction"; synthetic content is "marked in a machine-readable format"; deployers disclose deepfakes and AI-generated public-interest text.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>NIS2, Directive 2022/2555</h3>
+      <span class="when">Transposed by 17 Oct 2024 · applies to essential and important entities</span>
+      <ul>
+        <li><strong>Art. 21(2)</strong>: "appropriate and proportionate technical, operational and organisational measures", including "incident handling", "supply chain security", "security in network and information systems acquisition, development and maintenance, including vulnerability handling", "access control policies and asset management", "the use of cryptography", "multi-factor authentication".</li>
+        <li><strong>Art. 23(4)</strong>: "within 24 hours… an early warning", "within 72 hours… an incident notification", a final report "not later than one month".</li>
+        <li><strong>Art. 20</strong>: management bodies approve the measures and are accountable for them.</li>
+      </ul>
+      <p>An agent stack that calls tools against production systems will usually fall within the directive's broad definition of a network and information system; what NIS2 binds, though, is the operating entity, if it is essential or important, not the agent itself. Its supply chain includes the model weights, the MCP servers and every container image.</p>
+    </div>
+    <div>
+      <h3>ISO/IEC 42001:2023</h3>
+      <span class="when">Certifiable management system · reference controls in Annex A</span>
+      <ul>
+        <li><strong>A.6.2.8</strong> AI system recording of event logs; <strong>A.6.2.6</strong> operation and monitoring; <strong>A.6.2.7</strong> technical documentation.</li>
+        <li><strong>A.9.4</strong> intended use of the AI system: the system is not used outside its documented purpose.</li>
+        <li><strong>A.5</strong> impact assessment, documented; <strong>A.8.4</strong> communication of incidents; <strong>A.10.2, A.10.3</strong> responsibilities allocated with suppliers.</li>
+      </ul>
+      <p>ISO 42001 does not bind anyone by itself. It is what an auditor will use as a checklist, and what the AI Act's harmonised standards are expected to lean on. Control titles above are paraphrased for readability; the standard's text is not reproduced.</p>
+    </div>
+    <div>
+      <h3>Swiss Federal Act on Data Protection, FADP, in force since 1 Sept 2023</h3>
+      <span class="when">Applies to any processing of personal data in Switzerland · AI bill expected for consultation by end 2026</span>
+      <ul>
+        <li><strong>Art. 21</strong>: for a decision "based exclusively on automated processing" with legal or considerable adverse effect, the controller informs the person, who "may request that the automated individual decision be reviewed by a natural person".</li>
+        <li><strong>Art. 22</strong>: a data protection impact assessment "if processing is likely to result in a high risk", carried out "beforehand".</li>
+        <li><strong>Art. 7</strong>: protection by design "from the planning stage"; <strong>Art. 8</strong>: "a level of data security appropriate to the risk"; <strong>Art. 12</strong>: a record of processing activities; <strong>Art. 24</strong>: breaches notified to the FDPIC "as quickly as possible".</li>
+      </ul>
+      <p>Switzerland has no AI act. On 12 February 2025 the Federal Council chose a sector-by-sector approach and announced that Switzerland would ratify the Council of Europe AI Convention; Switzerland signed the Convention on 27 March 2025, and the implementing bill is expected for consultation by the end of 2026.</p>
+    </div>
+    <div class="span">
+      <h3>FINMA Guidance 08/2024, 18 Dec 2024</h3>
+      <span class="when">Supervised financial institutions · legal basis: Circular 2023/1 operational risks</span>
+      <ul>
+        <li><strong>§2.2</strong>: "a centrally managed inventory with a risk classification and resulting measures".</li>
+        <li><strong>§2.4</strong>: tests "for accuracy, robustness and stability and, if necessary, bias", with "performance indicators defined in advance"; fallback mechanisms.</li>
+        <li><strong>§2.5</strong>: documentation covering "purpose of the application, data selection and preparation, model selection, performance measures, assumptions, limitations, testing and controls as well as fallback solutions".</li>
+        <li><strong>§2.6</strong>: results that can be "understood, explained or reproduced" where decisions must be justified.</li>
+        <li><strong>§2.7</strong>: an independent review by qualified personnel, distinct from development.</li>
+      </ul>
+      <p>The guidance is explicit that "to date, there is no AI-specific legislation in Switzerland" and that existing, technology-neutral requirements already cover the risk.</p>
+    </div>
+  </div>
+</section>
+
+<figure class="fig wide">
+  <h2 style="margin:22px 0 4px">Which layer has to answer</h2>
+  <div class="svgbox">
+  <svg viewBox="0 0 1180 580" role="img" aria-label="Matrix of regulatory requirements against the layers of the agent stack. Rows are articles of the EU AI Act, NIS2, ISO 42001, the Swiss FADP and FINMA guidance 08/2024. Columns are the seven layers: identity, ingress and authorization, sandbox and agent runtime, MCP gateway and tools, model gateway with guardrails and serving, registry with Git and images, observability and logs. A filled cell means that layer carries the primary answer; a light cell means it contributes.">
+<style>.mh{font-size:11px;font-weight:600;fill:currentColor} .rq{font-size:12px;font-weight:600;fill:currentColor} .rs{font-size:11px;fill:var(--muted)} .c2{fill:var(--cncf)} .c1{fill:var(--cncf);opacity:.28} .gl{stroke:var(--line);stroke-width:1}</style>
+<text class="mh" x="389" y="40" text-anchor="middle">Identity</text>
+<text class="mh" x="508" y="40" text-anchor="middle">Ingress &</text>
+<text class="mh" x="508" y="54" text-anchor="middle">authorization</text>
+<text class="mh" x="626" y="40" text-anchor="middle">Sandbox &</text>
+<text class="mh" x="626" y="54" text-anchor="middle">agent runtime</text>
+<text class="mh" x="745" y="40" text-anchor="middle">MCP gateway</text>
+<text class="mh" x="745" y="54" text-anchor="middle">& tools</text>
+<text class="mh" x="864" y="40" text-anchor="middle">Model gateway,</text>
+<text class="mh" x="864" y="54" text-anchor="middle">guardrails, serving</text>
+<text class="mh" x="982" y="40" text-anchor="middle">Registry,</text>
+<text class="mh" x="982" y="54" text-anchor="middle">Git, images</text>
+<text class="mh" x="1101" y="40" text-anchor="middle">Observability</text>
+<text class="mh" x="1101" y="54" text-anchor="middle">& logs</text>
+<line class="gl" x1="20" y1="76" x2="1160" y2="76"/>
+<text class="rq" x="20" y="99">AI Act art. 12, 26(6)</text>
+<text class="rs" x="20" y="112">Automatic event logs, kept ≥ 6 months</text>
+<rect class="c1" x="690" y="89" width="111" height="24" rx="3"/>
+<rect class="c1" x="808" y="89" width="111" height="24" rx="3"/>
+<rect class="c2" x="1045" y="89" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="116" x2="1160" y2="116"/>
+<text class="rq" x="20" y="129">AI Act art. 14</text>
+<text class="rs" x="20" y="142">Human oversight: override, stop button</text>
+<rect class="c1" x="453" y="119" width="111" height="24" rx="3"/>
+<rect class="c1" x="571" y="119" width="111" height="24" rx="3"/>
+<rect class="c2" x="690" y="119" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="146" x2="1160" y2="146"/>
+<text class="rq" x="20" y="159">AI Act art. 9, 15</text>
+<text class="rs" x="20" y="172">Risk management; robustness, cybersecurity</text>
+<rect class="c2" x="571" y="149" width="111" height="24" rx="3"/>
+<rect class="c2" x="808" y="149" width="111" height="24" rx="3"/>
+<rect class="c1" x="926" y="149" width="111" height="24" rx="3"/>
+<rect class="c1" x="1045" y="149" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="176" x2="1160" y2="176"/>
+<text class="rq" x="20" y="189">AI Act art. 11</text>
+<text class="rs" x="20" y="202">Technical documentation, kept up to date</text>
+<rect class="c1" x="808" y="179" width="111" height="24" rx="3"/>
+<rect class="c2" x="926" y="179" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="206" x2="1160" y2="206"/>
+<text class="rq" x="20" y="219">AI Act art. 26(2), 50</text>
+<text class="rs" x="20" y="232">Competent overseers; say it is an AI</text>
+<rect class="c1" x="334" y="209" width="111" height="24" rx="3"/>
+<rect class="c1" x="571" y="209" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="236" x2="1160" y2="236"/>
+<text class="rq" x="20" y="249">AI Act art. 72, 73</text>
+<text class="rs" x="20" y="262">Post-market monitoring; incidents in 15 days</text>
+<rect class="c1" x="690" y="239" width="111" height="24" rx="3"/>
+<rect class="c1" x="808" y="239" width="111" height="24" rx="3"/>
+<rect class="c2" x="1045" y="239" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="266" x2="1160" y2="266"/>
+<text class="rq" x="20" y="279">NIS2 art. 21(2)</text>
+<text class="rs" x="20" y="292">Access control, supply chain, crypto, MFA, incidents</text>
+<rect class="c2" x="334" y="269" width="111" height="24" rx="3"/>
+<rect class="c2" x="453" y="269" width="111" height="24" rx="3"/>
+<rect class="c1" x="571" y="269" width="111" height="24" rx="3"/>
+<rect class="c1" x="690" y="269" width="111" height="24" rx="3"/>
+<rect class="c2" x="926" y="269" width="111" height="24" rx="3"/>
+<rect class="c1" x="1045" y="269" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="296" x2="1160" y2="296"/>
+<text class="rq" x="20" y="309">NIS2 art. 23</text>
+<text class="rs" x="20" y="322">Early warning 24 h, notice 72 h, report 1 month</text>
+<rect class="c2" x="1045" y="299" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="326" x2="1160" y2="326"/>
+<text class="rq" x="20" y="339">ISO 42001 A.6.2.8, A.9.4</text>
+<text class="rs" x="20" y="352">Event logs; intended use only</text>
+<rect class="c1" x="571" y="329" width="111" height="24" rx="3"/>
+<rect class="c2" x="690" y="329" width="111" height="24" rx="3"/>
+<rect class="c2" x="1045" y="329" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="356" x2="1160" y2="356"/>
+<text class="rq" x="20" y="369">ISO 42001 A.5, A.10</text>
+<text class="rs" x="20" y="382">Impact assessment; third-party responsibilities</text>
+<rect class="c1" x="690" y="359" width="111" height="24" rx="3"/>
+<rect class="c1" x="808" y="359" width="111" height="24" rx="3"/>
+<rect class="c2" x="926" y="359" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="386" x2="1160" y2="386"/>
+<text class="rq" x="20" y="399">FADP art. 21, 22</text>
+<text class="rs" x="20" y="412">Automated decisions: inform, human review; DPIA</text>
+<rect class="c1" x="334" y="389" width="111" height="24" rx="3"/>
+<rect class="c1" x="571" y="389" width="111" height="24" rx="3"/>
+<rect class="c2" x="690" y="389" width="111" height="24" rx="3"/>
+<rect class="c1" x="808" y="389" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="416" x2="1160" y2="416"/>
+<text class="rq" x="20" y="429">FADP art. 7, 8, 24</text>
+<text class="rs" x="20" y="442">Privacy by design, security, breach notice</text>
+<rect class="c1" x="334" y="419" width="111" height="24" rx="3"/>
+<rect class="c1" x="453" y="419" width="111" height="24" rx="3"/>
+<rect class="c2" x="571" y="419" width="111" height="24" rx="3"/>
+<rect class="c2" x="808" y="419" width="111" height="24" rx="3"/>
+<rect class="c1" x="1045" y="419" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="446" x2="1160" y2="446"/>
+<text class="rq" x="20" y="459">FINMA 08/2024 §2.2, 2.5</text>
+<text class="rs" x="20" y="472">Inventory with risk class; documentation</text>
+<rect class="c2" x="926" y="449" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="476" x2="1160" y2="476"/>
+<text class="rq" x="20" y="489">FINMA 08/2024 §2.4, 2.6, 2.7</text>
+<text class="rs" x="20" y="502">Tests, monitoring, explainability, review</text>
+<rect class="c2" x="808" y="479" width="111" height="24" rx="3"/>
+<rect class="c1" x="926" y="479" width="111" height="24" rx="3"/>
+<rect class="c2" x="1045" y="479" width="111" height="24" rx="3"/>
+<line class="gl" x1="20" y1="506" x2="1160" y2="506"/>
+<rect class="c2" x="20" y="518" width="14" height="12" rx="2"/><text class="rs" x="40" y="528">primary answer lives in this layer</text><rect class="c1" x="260" y="518" width="14" height="12" rx="2"/><text class="rs" x="280" y="528">layer contributes</text><text class="rs" x="1160" y="528" text-anchor="end">One reading, not legal advice. Sources at the end of the article.</text>
+</svg>
+  </div>
+  <figcaption>The rows are the demands above; the columns are the layers of the stack from parts 1 and 2. A filled cell is where the primary answer lives, a light cell is a layer that contributes. Two things stand out: observability and logs answer more rows than any other layer, and the human-oversight row has no strong answer anywhere.</figcaption>
+</figure>
+
+<div class="post">
+  <h2>Reading the matrix</h2>
+  <p><strong>Logs answer the most rows, and the stack already produces them.</strong> Article 12 logs, the six-month retention of Article 26(6), NIS2's incident timelines, ISO 42001's event logs, FINMA's monitoring: all of them start from the same raw material. OpenTelemetry traces from the agent, the MCP gateway's record of every tool call with caller, tool and server, OpenShell's OCSF security events, DCGM's GPU metrics. What the stack does not do by itself is keep them for six months in a form an auditor can read, and tie a tool call to the person who was accountable for it. That is a retention and correlation job, and it is where most first audits fail.</p>
+  <p><strong>Human oversight is a demand without a box.</strong> Article 14 asks for a person who can override an output or interrupt the system through a stop button. Article 26(2) asks that this person have competence and authority. In the stack, the stop button exists at the infrastructure level: revoke the agent's identity at Keycloak or SPIRE, remove the tool from the MCP gateway's allowlist, scale the pod to zero. None of that is a surface a business user or a compliance officer would recognise as "a stop button". Red Hat's own blueprint says it: human approval workflows still need product-level patterns. Part 4 looks at what Microsoft's Agent Governance Toolkit brings to exactly this row.</p>
+  <p><strong>Intended use is enforced by whom?</strong> ISO 42001 A.9.4 and the FADP's "purpose of processing" both assume the system is used only for what it was documented for. Identity says who the agent is; the MCP gateway says which tools it may call. Neither says what the agent is supposed to be doing right now, for which task. An agent allowed to read the CRM and write to the ERP is within its permissions whether it is reconciling an invoice or doing something nobody asked for. This is the second row where the stack has no strong cell.</p>
+  <p><strong>The inventory is the easy win.</strong> FINMA §2.2 and ISO 42001 both start with an inventory carrying a risk class. The model registry, the MCP catalog, the agent definitions in Git, the signed images: the stack already has the four lists. Joining them into one inventory with a risk class per agent is mostly discipline, and it is the first thing a supervisor asks for.</p>
+
+  <h2>What changed in July 2026, and what did not</h2>
+  <p>Regulation (EU) 2026/1744, the "Digital Omnibus on AI", was published on 24 July 2026 and entered into force on 27 July. It moves the application date of the high-risk obligations to 2 December 2027 for Annex III systems and 2 August 2028 for systems embedded in regulated products, and narrows the definition of a safety component. It does not touch the content of Articles 9 to 15 or Article 26, and it does not move Article 50: since 2 August 2026, providers must design AI systems that interact with people so that those people are told they are dealing with an AI, and deployers carry their own disclosure duties for synthetic content, with a four-month transition to 2 December 2026 for synthetic-media systems already on the market. Sixteen months more to build the evidence chain; no more time on transparency.</p>
+
+  <div class="gaps">
+    <p><strong>What this means for the stack of parts 1 and 2.</strong> Nothing in the five texts requires a specific product. They require that logs exist and are kept, that a person can stop the system and be shown to have had the authority to, that the system is only used for its purpose, that there is an inventory, and that incidents are reported on a clock. The open-source stack produces the raw material for all of it. The two rows it does not answer, oversight and intended use, are where the next part goes.</p>
+  </div>
+
+  <div class="cta">
+    <strong>Next in the series</strong>
+    <ol class="series">
+      <li><span><a href="../part-4/">Part 4</a></span>Action governance with Microsoft's Agent Governance Toolkit: how the oversight and intended-use rows get an answer, and where it plugs into this stack.</li>
+      <li><span><a href="../part-5/">Part 5</a></span>Observability: how it is proven. What OpenTelemetry, OCSF and MLflow record, and what they cannot tell you.</li>
+      <li><span><a href="../part-6/">Part 6</a></span>Rolling out a model blue/green: how the stack changes without breaking what parts 3 to 5 established.</li>
+    </ol>
+  </div>
+
+  <p class="notice">This article is an engineer's reading of public legal texts, checked against the official versions on the dates given below. It is not legal advice. For a real deployment, read the texts with counsel and with your supervisor's guidance for your sector.</p>
+
+  <div class="notice"><strong>Read, not run.</strong> Everything in this series comes from reading public code and documents at a stated date, not from running them in production. Treat it as a map to test, not a result to trust: these projects move monthly, their bugs move with them, and a component marked preview or alpha here may be stable, or gone, by the time you read this. Test it on your own cluster. When something does not match, file the issue in the project's tracker and send the fix back: that is how open code improves, and it is the only way a map like this one stays true.</div>
+
+  <hr>
+  <div class="sources">
+    <strong>Sources</strong>
+    <ol>
+      <li><a href="https://eur-lex.europa.eu/eli/reg/2024/1689/oj">Regulation (EU) 2024/1689</a> (AI Act) and <a href="https://eur-lex.europa.eu/eli/reg/2026/1744/oj/eng">Regulation (EU) 2026/1744</a> (Digital Omnibus on AI), EUR-Lex; article texts checked on 22 September 2026</li>
+      <li><a href="https://eur-lex.europa.eu/eli/dir/2022/2555/oj">Directive (EU) 2022/2555</a> (NIS2), Articles 20, 21 and 23</li>
+      <li>ISO/IEC 42001:2023, Annex A control list</li>
+      <li><a href="https://www.fedlex.admin.ch/eli/cc/2022/491/en">Federal Act on Data Protection</a> (FADP, SR 235.1), Fedlex, English translation, Articles 7, 8, 12, 21, 22, 24</li>
+      <li><a href="https://www.finma.ch/en/news/2024/12/20241218-mm-finma-am-08-24/">FINMA Guidance 08/2024</a>, Governance and risk management when using artificial intelligence, 18 December 2024, sections 2.1 to 2.7</li>
+      <li><a href="https://www.admin.ch/gov/en/start/documentation/media-releases.msg-id-104110.html">Federal Council, "AI regulation: Federal Council to ratify Council of Europe Convention"</a>, media release of 12 February 2025 (decision and sector-specific approach); <a href="https://www.admin.ch/gov/en/start/documentation/media-releases.msg-id-104646.html">"Switzerland signs Council of Europe Convention on AI"</a>, media release of 27 March 2025 (signature)</li>
+      <li><a href="https://developers.redhat.com/articles/2026/07/20/architect-open-blueprint-cloud-native-ai-agents">Architect an open blueprint for cloud-native AI agents</a>, Red Hat Developer, 20 July 2026, for the stack and the "human approval" gap</li>
+    </ol>
+    <p>Independent work, not affiliated with any regulator, standards body or vendor named. Not legal advice. Views are my own and do not represent the position of my employer.</p>
+  </div>
+
+</div>
+
+</body>
+</html>

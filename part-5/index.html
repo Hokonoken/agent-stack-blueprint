@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Part 5 of the open agent stack blueprint: Observability: what the stack records, and what it cannot tell you.">
+<title>Proving What Agents Did</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --ink:#131A24; --muted:#5A6675; --line:#D5DBE3; --band:#E9EDF3;
+  --cncf:#5B3FBF; --nv:#3F7D0B; --ms:#175CD3; --lf:#6B7480; --us:#C2410C;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1117; --surface:#151B24; --ink:#E6EBF2; --muted:#94A1B2; --line:#2A3340; --band:#1A222D;
+    --cncf:#B39DFF; --nv:#86CB3C; --ms:#84ADFF; --lf:#94A1B2; --us:#FB923C;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1117; --surface:#151B24; --ink:#E6EBF2; --muted:#94A1B2; --line:#2A3340; --band:#1A222D;
+  --cncf:#B39DFF; --nv:#86CB3C; --ms:#84ADFF; --lf:#94A1B2; --us:#FB923C;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.55;padding-inline:20px;padding-block:32px 56px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4.6vw,44px);font-weight:700;line-height:1.06;letter-spacing:-.01em}
+h2{font-size:23px;font-weight:600}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{max-width:72ch;color:var(--muted);margin:0}
+header{display:flex;flex-direction:column;gap:12px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:13px;color:var(--muted);padding:12px 0;border-block:1px solid var(--line)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{display:inline-block;width:22px;height:12px;border:2px solid var(--lf);background:var(--surface)}
+.sw.cncf{border-color:var(--cncf)} .sw.nv{border-color:var(--nv)} .sw.ms{border-color:var(--ms);border-style:dashed} .sw.us{border-color:var(--us);border-width:3px}
+figure{margin:0;display:flex;flex-direction:column;gap:12px}
+.svgbox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);padding:10px}
+svg{display:block;min-width:1040px;width:100%;height:auto;color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif}
+svg .b rect{fill:var(--surface);stroke:var(--lf);stroke-width:1.4}
+svg .cncf rect{stroke:var(--cncf)} svg .nv rect{stroke:var(--nv)}
+svg .ms rect{stroke:var(--ms);stroke-dasharray:6 3}
+svg .us rect{stroke:var(--us);stroke-width:2.4}
+svg .t{font-size:13px;font-weight:600;fill:currentColor}
+svg .s{font-size:10.5px;fill:var(--muted)}
+svg .tag{font-size:9px;letter-spacing:.06em;font-family:"IBM Plex Mono",ui-monospace,monospace}
+svg .tc{fill:var(--cncf)} svg .tnv{fill:var(--nv)} svg .tms{fill:var(--ms)} svg .tlf{fill:var(--lf)} svg .tus{fill:var(--us)}
+svg .frame{fill:var(--band);stroke:var(--line);stroke-width:1}
+svg .pod{fill:none;stroke:var(--nv);stroke-width:1.6;stroke-dasharray:7 4}
+svg .agt{fill:none;stroke:var(--ms);stroke-width:1.4;stroke-dasharray:6 3}
+svg .cap{font-size:10.5px;letter-spacing:.07em;font-weight:600}
+svg .lbl{font-size:10.5px;fill:var(--muted)}
+svg .flow{fill:none;stroke:currentColor;stroke-width:1.3}
+svg .msflow{fill:none;stroke:var(--ms);stroke-width:1.4;stroke-dasharray:5 3}
+svg .tr{fill:none;stroke:var(--muted);stroke-width:1.1;stroke-dasharray:2 4}
+svg .mfill{fill:var(--ms)} svg .tfill{fill:var(--muted)}
+svg .bar rect{fill:var(--band);stroke:var(--line)}
+svg .mat{font-size:9px;font-style:italic;fill:var(--muted)}
+svg .svc{fill:none;stroke:var(--line);stroke-width:1.6;stroke-dasharray:3 3}
+svg .blue rect{fill:var(--surface);stroke:var(--ms);stroke-width:1.8}
+svg .green rect{fill:var(--surface);stroke:var(--nv);stroke-width:1.8}
+svg .tblue{fill:var(--ms)} svg .tgreen{fill:var(--nv)}
+svg .wflow{fill:none;stroke:var(--nv);stroke-width:2.2}
+svg .wflow2{fill:none;stroke:var(--ms);stroke-width:2.2}
+svg .shadow{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3}
+svg .gate rect{fill:var(--band);stroke:var(--us);stroke-width:1.6}
+svg .ghost rect{fill:var(--surface);stroke:var(--cncf);stroke-width:1.2;stroke-dasharray:5 3}
+figcaption code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+figcaption{max-width:78ch;color:var(--muted);font-size:14px}
+figcaption a{color:var(--us)}
+svg a{cursor:pointer}
+section{display:flex;flex-direction:column;gap:14px}
+.tblbox{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:800px;font-size:13.5px}
+th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:10px;border-bottom:1px solid var(--line);background:var(--band)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td:first-child{font-weight:600;white-space:nowrap}
+td code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+.caveats{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));border:1px solid var(--line);background:var(--surface)}
+.cv{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.cv h3{font-size:17px;font-weight:600}
+.cv p{margin:0;font-size:14px}
+footer{font-size:12.5px;color:var(--muted);max-width:88ch}
+footer a{color:inherit}
+
+.post{max-width:76ch;margin:0 auto;display:flex;flex-direction:column;gap:22px;font-size:16.5px;line-height:1.6}
+.post h1{font-size:clamp(30px,5vw,46px)}
+.post h2{margin-top:10px}
+.post p{margin:0}
+.post ul,.post ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.meta{font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+.kicker{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cncf)}
+.takeaways{border:1px solid var(--line);background:var(--surface);padding:18px 22px;display:flex;flex-direction:column;gap:10px}
+.takeaways h3{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.takeaways ol{font-size:15.5px}
+.quote{border-left:3px solid var(--rh);padding:8px 18px;display:flex;flex-direction:column;gap:8px}
+.quote blockquote{margin:0;font-size:18px;font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;font-weight:500}
+.quote span{font-size:13.5px;color:var(--muted)}
+.cta{border:2px solid var(--us);padding:18px 22px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.cta strong{color:var(--us)}
+.series{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:15.5px}
+.series li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:baseline}
+.series li span a{color:inherit;text-decoration:none}
+.series li span a:hover{text-decoration:underline}
+.series li span{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--us);white-space:nowrap}
+.fig{display:flex;flex-direction:column;gap:10px}
+.fig .svgbox{padding:8px}
+.fig figcaption{font-size:13.5px}
+.wide{max-width:1280px;margin:0 auto;width:100%}
+.sources{font-size:13.5px;color:var(--muted)}
+.sources ol{gap:4px}
+.sources a{color:inherit}
+hr{border:0;border-top:1px solid var(--line);margin:8px 0}
+
+.tblbox{margin:0}
+
+.replsec{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.replsec h2{margin:0}
+table.repl{min-width:900px;font-size:14px;table-layout:fixed}
+table.repl col.c1{width:15%} table.repl col.c2{width:21%} table.repl col.c3{width:28%} table.repl col.c4{width:15%} table.repl col.c5{width:21%}
+table.repl th{padding:12px 14px}
+table.repl td{padding:11px 14px;line-height:1.4;vertical-align:top}
+table.repl td:first-child{white-space:normal;font-weight:600}
+table.repl tbody tr:nth-child(even) td{background:color-mix(in srgb, var(--band) 55%, transparent)}
+table.repl td:nth-child(3){color:var(--ink)}
+table.repl td:nth-child(2),table.repl td:nth-child(4),table.repl td:nth-child(5){color:var(--muted)}
+
+.law{border:1px solid var(--line);background:var(--surface);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.law > div.span{grid-column:1/-1}
+.law > div.span ul{columns:2;column-gap:28px}
+.law > div.span ul li{break-inside:avoid}
+.law > div{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.law h3{font-size:16px;font-weight:600}
+.law .when{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--cncf);letter-spacing:.04em}
+.law p{margin:0;font-size:14px}
+.law ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.gaps{border-left:3px solid var(--us);padding:8px 18px;display:flex;flex-direction:column;gap:10px}
+.gaps p{margin:0}
+.notice{font-size:13.5px;color:var(--muted);border:1px dashed var(--line);padding:10px 14px}
+
+.qa{border:1px solid var(--line);background:var(--surface)}
+.qa table{min-width:0;table-layout:fixed}
+.qa col.q{width:34%} .qa col.r{width:38%} .qa col.g{width:28%}
+.qa td:first-child{white-space:normal}
+.qa td:nth-child(3){color:var(--muted)}
+.quote{border-left:3px solid var(--cncf)}
+
+.cfgblock{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.cfgblock > strong{padding:12px 16px 10px;font-size:15px;border-bottom:1px solid var(--line)}
+.cfgblock .src{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 16px;background:var(--band);font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--muted);border-bottom:1px solid var(--line)}
+.cfgblock .src b{font-weight:500;color:var(--ink)}
+pre.cfg{margin:0;padding:14px 16px;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;tab-size:2}
+pre.cfg .c{color:var(--muted);font-style:italic}
+pre.cfg .k{color:var(--cncf);font-weight:500}
+pre.cfg .v{color:var(--ink)}
+pre.cfg .s{color:var(--nv)}
+pre.cfg .n{color:var(--ms)}
+.cfgblock .note{padding:10px 16px;font-size:13.5px;color:var(--muted);border-top:1px solid var(--line)}
+.sn{max-width:76ch;margin:0 auto 18px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.04em;color:var(--muted)}
+.sn a{color:var(--us);text-decoration:none}
+.sn a:hover,.sn a:focus-visible{text-decoration:underline;outline:none}
+body{margin:0}
+</style>
+</head>
+<body>
+<nav class="sn"><a href="../part-4/">&larr; Part 4</a><a href="../">All six parts</a><a href="../part-6/">Part 6 &rarr;</a></nav>
+<div class="post">
+  <span class="kicker">Blueprint · part 5 of 6 · draft for review</span>
+  <h1>Observability: what the stack records about an agent, and what it cannot tell you</h1>
+  <p class="lede">Parts 3 and 4 asked for evidence: logs kept six months, a person who approved, an action that stayed within its purpose. This part follows one tool call through the stack and looks at what actually gets written down, by which component, in which format, and where it ends up. Four records exist. Together they say what happened and whether it was allowed. None of them can prove it to someone who does not trust the operator.</p>
+  <div class="meta"><span>Draft · September 2026</span><span>Reading time: 7 min</span><span>Views are my own, not my employer's</span></div>
+
+  <div class="takeaways">
+    <h3>Three things to take away</h3>
+    <ol>
+      <li><strong>Telemetry says what happened. It does not say whether it should have.</strong> OpenTelemetry's GenAI conventions describe the model call, the tool execution, the tokens and the latency. They carry no verdict, no approver, no sensitivity label. That second record has to come from the governance layer, and it has to share the trace id.</li>
+      <li><strong>Four records, one trace id, six months.</strong> The trace, the gateway's tool-call log, the verdict with its approval, and the sandbox's OCSF events. If they are joined by the same trace id and kept for the retention period of Article 26(6), most audit questions have an answer in one query.</li>
+      <li><strong>A Merkle tree proves integrity to the operator, not to an outsider.</strong> It shows nothing was altered after the fact. It does not show, to a regulator or a customer, that the tree existed on the day it claims. That needs a witness the operator does not control, and no component in the stack provides one.</li>
+    </ol>
+  </div>
+
+  <h2>The four records</h2>
+  <p><strong>1. The trace.</strong> The agent harness or the OGX server emits OpenTelemetry spans following the GenAI semantic conventions: one span per model invocation, per tool execution, per agent step, with attributes for the model name, the token counts, the finish reason, optionally the content. This is the richest record and the only one that shows the reasoning chain as a tree. Two caveats. The conventions were still marked "Development" in 2026, so attribute names can change between library versions. And content capture is off by default in most instrumentations: turning it on stores prompts and answers, which is a data-protection decision, not a logging one.</p>
+  <p><strong>2. The gateway's tool-call log.</strong> The MCP gateway of part 1 writes one structured log entry per tool call: the caller's subject from the JWT, the tool, the server, the HTTP status, a request id and an anonymised session id, flagged <code>audit=true</code>, with the trace id attached and exported over OTLP. This is the record that answers "who called what on which system", and it is produced by the choke point itself, not by the agent. It is not in OCSF format; it is a structured log.</p>
+  <p><strong>3. The verdict and the approval.</strong> This is the record telemetry does not produce. The governance toolkit of part 4 writes, for each action, the rule that fired, the verdict, and when a human was involved, who approved, with the digest of the exact action they saw. The entries go into a Merkle tree with a root hash and inclusion proofs, so an auditor can check that a given entry was present and unchanged. It arrives by its own path, not through the collector, and it has to carry the same trace id as records 1 and 2 or it cannot be joined to them.</p>
+  <p><strong>4. The sandbox's security events.</strong> Below the tool call, the OpenShell supervisor emits OCSF events for what the process actually did: files opened, connections attempted, processes spawned, and the policy decision on each. OCSF is the schema SIEMs already ingest, so this record lands where the security team already looks. It answers a question the other three cannot: whether the code behind the tool touched anything it was not supposed to.</p>
+</div>
+
+<figure class="fig wide">
+  <div class="svgbox">
+  <svg viewBox="0 0 1180 620" role="img" aria-label="From one tool call to evidence. The call produces four records: an OpenTelemetry trace from the agent runtime, the MCP gateway's tool-call log, OCSF security events from the sandbox, and the verdict and approval record from the governance toolkit. The first three flow through the OpenTelemetry collector into Jaeger or Tempo, Prometheus, MLflow and the SIEM, kept for at least six months; the verdict record goes to the audit tree by its own path. The last auditor question, proof to an outsider, has no record in the stack.">
+<defs><marker id="o5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker><marker id="o5m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mfill" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+<g class="b"><rect x="20" y="230" width="150" height="70"/><text class="t" x="95" y="258" text-anchor="middle">One tool call</text><text class="s" x="95" y="276" text-anchor="middle">agent → gateway → server</text><text class="s" x="95" y="292" text-anchor="middle">trace id: 4bf9…</text></g>
+<text class="cap" x="230" y="42" fill="currentColor">FOUR RECORDS, ONE TRACE ID</text>
+<g class="b nv"><rect x="230" y="60" width="300" height="86"/><text class="t" x="380" y="84" text-anchor="middle">1 · OpenTelemetry trace</text><text class="s" x="380" y="102" text-anchor="middle">gen_ai.* spans: model call, tool execution, agent step</text><text class="s" x="380" y="118" text-anchor="middle">what happened, when, how long, how many tokens</text><text class="s" x="380" y="134" text-anchor="middle">harness or OGX server · conventions "Development"</text></g>
+<g class="b cncf"><rect x="230" y="166" width="300" height="86"/><text class="t" x="380" y="190" text-anchor="middle">2 · Gateway tool-call log</text><text class="s" x="380" y="208" text-anchor="middle">audit=true · user · tool · server · status · request id</text><text class="s" x="380" y="224" text-anchor="middle">who called which tool on which server</text><text class="s" x="380" y="240" text-anchor="middle">structured log with trace id, exported over OTLP</text></g>
+<g class="b nv"><rect x="230" y="272" width="300" height="86"/><text class="t" x="380" y="296" text-anchor="middle">4 · Sandbox security events</text><text class="s" x="380" y="314" text-anchor="middle">OCSF: process, file, network decisions of the sandbox</text><text class="s" x="380" y="330" text-anchor="middle">what the process actually touched, below the tool call</text><text class="s" x="380" y="346" text-anchor="middle">from the OpenShell supervisor</text></g>
+<g class="b ms"><rect x="230" y="378" width="300" height="86"/><text class="t" x="380" y="402" text-anchor="middle">3 · Verdict and approval record</text><text class="s" x="380" y="420" text-anchor="middle">rule that fired · allow, deny, escalate · approver</text><text class="s" x="380" y="436" text-anchor="middle">should it have happened, and who said so</text><text class="s" x="380" y="452" text-anchor="middle">its own path, same trace id</text></g>
+<g class="flow"><line x1="170" y1="265" x2="228" y2="103" marker-end="url(#o5)"/><line x1="170" y1="265" x2="228" y2="209" marker-end="url(#o5)"/><line x1="170" y1="265" x2="228" y2="315" marker-end="url(#o5)"/><line x1="170" y1="265" x2="228" y2="421" marker-end="url(#o5)"/></g>
+<g class="b cncf"><rect x="590" y="150" width="170" height="120"/><text class="t" x="675" y="178" text-anchor="middle">OpenTelemetry</text><text class="t" x="675" y="196" text-anchor="middle">Collector</text><text class="s" x="675" y="216" text-anchor="middle">traces, metrics, logs</text><text class="s" x="675" y="232" text-anchor="middle">one pipeline, one trace id</text><text class="s" x="675" y="248" text-anchor="middle">joins records 1, 2, 4</text></g>
+<g class="flow"><line x1="530" y1="103" x2="588" y2="180" marker-end="url(#o5)"/><line x1="530" y1="209" x2="588" y2="210" marker-end="url(#o5)"/><line x1="530" y1="315" x2="588" y2="240" marker-end="url(#o5)"/></g>
+<g class="b ms"><rect x="590" y="378" width="170" height="86"/><text class="t" x="675" y="402" text-anchor="middle">Audit tree</text><text class="s" x="675" y="420" text-anchor="middle">Merkle root + inclusion proofs</text><text class="s" x="675" y="436" text-anchor="middle">nothing altered after the fact</text><text class="s" x="675" y="452" text-anchor="middle">proves it to the operator only</text></g>
+<g class="msflow"><line x1="530" y1="421" x2="588" y2="421" marker-end="url(#o5m)"/></g>
+<text class="cap" x="820" y="42" fill="currentColor">STORES · KEPT ≥ 6 MONTHS (AI ACT ART. 26(6))</text>
+<g class="b cncf"><rect x="820" y="60" width="340" height="56"/><text class="t" x="990" y="84" text-anchor="middle">Jaeger or Tempo</text><text class="s" x="990" y="102" text-anchor="middle">traces, queried by trace id</text></g>
+<g class="b cncf"><rect x="820" y="130" width="340" height="56"/><text class="t" x="990" y="154" text-anchor="middle">Prometheus + DCGM</text><text class="s" x="990" y="172" text-anchor="middle">latency, errors, refusals, GPU seconds</text></g>
+<g class="b"><rect x="820" y="200" width="340" height="56"/><text class="t" x="990" y="224" text-anchor="middle">MLflow Tracing</text><text class="s" x="990" y="242" text-anchor="middle">agent runs as experiments, approval status visible</text></g>
+<g class="b"><rect x="820" y="270" width="340" height="56"/><text class="t" x="990" y="294" text-anchor="middle">SIEM or log store</text><text class="s" x="990" y="312" text-anchor="middle">the tool-call log and OCSF events, six months</text></g>
+<g class="flow"><line x1="760" y1="180" x2="818" y2="90" marker-end="url(#o5)"/><line x1="760" y1="200" x2="818" y2="158" marker-end="url(#o5)"/><line x1="760" y1="220" x2="818" y2="228" marker-end="url(#o5)"/><line x1="760" y1="240" x2="818" y2="298" marker-end="url(#o5)"/></g>
+<g class="msflow"><line x1="760" y1="421" x2="818" y2="421" marker-end="url(#o5m)"/></g>
+<g class="b ms"><rect x="820" y="378" width="340" height="86"/><text class="t" x="990" y="402" text-anchor="middle">Backed-up roots, six months</text><text class="s" x="990" y="420" text-anchor="middle">the operator keeps the root hashes with the entries</text><text class="s" x="990" y="436" text-anchor="middle">an auditor verifies inclusion against the root</text><text class="s" x="990" y="452" text-anchor="middle">but the root is the operator's word</text></g>
+<g class="gate"><rect x="820" y="478" width="340" height="54"/><text class="cap tus" x="836" y="496">MISSING · PROOF TO AN OUTSIDER</text><text class="s" x="836" y="511" fill="currentColor">a witness the operator does not control:</text><text class="s" x="836" y="525" fill="currentColor">transparency log, signed timestamp, receipt</text></g>
+<g class="bar"><rect x="20" y="540" width="1140" height="64"/><text class="cap" x="36" y="562" fill="currentColor">WHAT EACH RECORD ANSWERS</text><text class="s" x="36" y="580">1 what happened and when · 2 who did it, on what · 4 what the process really touched · 3 whether it was allowed and who approved</text><text class="s" x="36" y="596">none of the four, alone or together, answers "prove it to someone who does not trust you": that needs a witness outside the operator's control</text></g>
+</svg>
+  </div>
+  <figcaption>One tool call, four records. Records 1, 2 and 4 flow through the OpenTelemetry collector into the trace store, Prometheus, MLflow and the SIEM; record 3 goes to the audit tree by its own path, and its roots are kept with the rest. All must share the trace id and be kept at least six months. The orange box is what no component provides: a witness outside the operator's control.</figcaption>
+</figure>
+
+<div class="post">
+  <h2>What an auditor asks, and which record answers</h2>
+  <div class="tblbox qa"><table>
+    <colgroup><col class="q"><col class="r"><col class="g"></colgroup>
+    <thead><tr><th>The question</th><th>The record that answers it</th><th>The gap</th></tr></thead>
+    <tbody>
+      <tr><td>What did the agent do on 12 March at 14:07?</td><td>Trace (1), queried by trace id in Jaeger or Tempo; tool-call log (2) for the systems touched</td><td>Only if the trace store kept it: default retention of trace backends is days, not months</td></tr>
+      <tr><td>Who was accountable for that call?</td><td>Tool-call log (2): the subject in the JWT the gateway validated</td><td>The subject is the agent's identity; the human on whose behalf it acted is only there if the token carries it</td></tr>
+      <tr><td>Was it allowed, and by which rule?</td><td>Verdict record (3): rule, verdict, timestamp</td><td>Only for calls that went through the toolkit; a call that bypassed it leaves records 1, 2, 4 and no verdict</td></tr>
+      <tr><td>Who approved it, and what exactly did they approve?</td><td>Verdict record (3): approver and the digest of the action</td><td>None, if the approval echoed the digest; the toolkit refuses approvals that do not</td></tr>
+      <tr><td>Did the code do anything beyond the tool call?</td><td>OCSF events (4) from the sandbox</td><td>Only for pattern A; the shared OGX server's isolation was still an early validation in 2026</td></tr>
+      <tr><td>Has this log been altered since?</td><td>Audit tree (3): root hash and inclusion proof</td><td>Proves it to whoever holds the root; the operator holds the root</td></tr>
+      <tr><td>Was the model behind this call tested against adversarial inputs before it went live?</td><td>The garak report kept with the rollout (part 6): a JSONL record per probe and a hit log, next to the AnalysisRun result</td><td>Only if the rollout kept it; garak probes the model through the guardrails, not the agent's tools, and it is a test record, not a record of the call</td></tr>
+      <tr><td>Prove to me, an outsider, that this existed on that day</td><td>Nothing in the stack</td><td>Needs a witness: a transparency log, a signed timestamp, a receipt from a party the operator does not control</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Where the records are switched on</h2>
+  <p>The files that create record 3, the manifest with its intervention points, the approval section, the intent, and the sector templates, are shown one by one in part 4. Two settings belong here instead, because they decide where the records go rather than what is decided. Both are read from the repository at commit 2e98345 of 21 September 2026.</p>
+
+  <div class="cfgblock">
+    <strong>Where the trace goes</strong>
+    <div class="src"><span><b>agent-governance-python/agent-os/examples/pharma-compliance/docker-compose.yml</b></span><span>YAML</span></div>
+    <pre class="cfg"><span class="c"># The demos point the SDK&#x27;s OpenTelemetry exporter at a collector by environment variable</span>
+<span class="k">environment</span>:
+  - <span class="v">OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317</span>
+
+<span class="c"># The agent-sre Helm chart exposes the same thing as values</span>
+<span class="k">otel</span>:
+  <span class="k">enabled</span>: <span class="n">true</span>
+  <span class="k">endpoint</span>: <span class="v">http://otel-collector:4317</span>
+  <span class="k">serviceName</span>: <span class="v">agent-sre</span></pre>
+    <div class="note">agent-governance-python/agent-sre/deployments/helm/agent-sre/values.yaml (enabled is false by default)</div>
+  </div>
+
+
+  <div class="cfgblock">
+    <strong>How the audit tree leaves the process</strong>
+    <div class="src"><span><b>agent-governance-python/agent-mesh/src/agentmesh/governance/audit.py</b></span><span>Python · signatures, bodies shortened</span></div>
+    <pre class="cfg"><span class="c"># Two exports on the audit log: a JSON document that carries the Merkle root with the</span>
+<span class="c"># entries, and the same entries as CloudEvents v1.0 envelopes for a bus or a SIEM</span>
+<span class="k">def</span> <span class="v">export</span>(self, start_time=<span class="n">None</span>, end_time=<span class="n">None</span>) -&gt; dict:
+    entries = self.query(start_time=start_time, end_time=end_time, limit=<span class="n">10000</span>)
+    <span class="k">return</span> {
+        <span class="s">&quot;exported_at&quot;</span>: ...,<span class="c">                          # UTC timestamp of the export</span>
+        <span class="s">&quot;merkle_root&quot;</span>: self._chain.get_root_hash(),
+        <span class="s">&quot;entry_count&quot;</span>: len(entries),
+        <span class="s">&quot;entries&quot;</span>: [e.model_dump() <span class="k">for</span> e <span class="k">in</span> entries],
+    }
+
+<span class="k">def</span> <span class="v">export_cloudevents</span>(self, start_time=<span class="n">None</span>, end_time=<span class="n">None</span>) -&gt; list[dict]:
+    <span class="k">return</span> [e.to_cloudevent() <span class="k">for</span> e <span class="k">in</span> entries]</pre>
+    <div class="note">The root travels with the export, and that is what an auditor checks the inclusion proofs against. What the export does not contain is anything signed by a party other than the operator, which is the subject of the last section.</div>
+  </div>
+
+  <p>Both defaults are conservative. The OpenTelemetry exporter in the Helm chart is off until an endpoint is given, so record 1 does not exist until someone decides where it lives. And the sample policy of part 4 keeps tool arguments out of the audit, <code>include_tool_args: false</code>, because arguments carry personal data: record 3 identifies the action by its digest, not by its content.</p>
+
+  <h2>The retention problem nobody budgets for</h2>
+  <p>Article 26(6) asks deployers to keep the automatically generated logs for at least six months. Trace backends are built for debugging, and their default retention is measured in days; Prometheus in weeks. Keeping six months of GenAI spans, with or without content, is a storage decision that has to be taken on purpose: a cold tier for traces, the tool-call log and OCSF events shipped to the SIEM the organisation already retains, and the audit tree backed up with its root hashes. The stack produces the records. Keeping them is the operator's job, and it is where the first audit usually finds the first gap.</p>
+
+  <h2>What a Merkle tree proves, and what it does not</h2>
+  <p>The toolkit's audit tree lets anyone with the root hash verify that an entry belongs to the tree and has not changed. That is real: an operator cannot quietly edit an entry after the fact without changing the root. What the tree does not do is prove to a third party <em>when</em> the root was produced, or that the tree the auditor is shown is the one that existed at the time. The operator holds the root; the operator could regenerate the whole tree. The toolkit's own code says it does not anchor to a transparency log. This is not a flaw specific to that toolkit; it is the limit of any integrity mechanism that stays inside one organisation.</p>
+  <p>The way out is known from software supply chains: publish the root, or a signed statement about it, to a log the operator does not control, and keep the receipt. Sigstore's Rekor already does this for build artefacts, the IETF's SCITT working group is standardising the receipt format, and RFC 3161 timestamps have done a simpler version of it for twenty years. None of these is wired into the agent stack of parts 1 and 2. For a regulated deployment, it is the last piece of the evidence chain, and the one to plan for before the first audit rather than after.</p>
+
+  <div class="gaps">
+    <p><strong>Net effect on the matrix of part 3.</strong> With the four records joined by trace id and retained, the logging, monitoring and incident rows are answered by the stack as it stands. The oversight row is answered by record 3 from part 4. What stays open, across every framework, is proof to an outsider; the frameworks do not name it yet, and the auditors already ask for it.</p>
+  </div>
+
+  <div class="cta">
+    <strong>Next in the series</strong>
+    <ol class="series">
+      <li><span><a href="../part-6/">Part 6</a></span>Rolling out a model blue/green: how the stack changes without breaking what parts 3 to 5 established.</li>
+    </ol>
+  </div>
+
+  <div class="notice"><strong>Read, not run.</strong> Everything in this series comes from reading public code and documents at a stated date, not from running them in production. Treat it as a map to test, not a result to trust: these projects move monthly, their bugs move with them, and a component marked preview or alpha here may be stable, or gone, by the time you read this. Test it on your own cluster. When something does not match, file the issue in the project's tracker and send the fix back: that is how open code improves, and it is the only way a map like this one stays true.</div>
+
+  <hr>
+  <div class="sources">
+    <strong>Sources</strong>
+    <ol>
+      <li><a href="https://opentelemetry.io/docs/specs/semconv/gen-ai/">OpenTelemetry Semantic Conventions for Generative AI</a>, status "Development" in 2026; <a href="https://www.cncf.io/">CNCF</a> graduation of OpenTelemetry, May 2026</li>
+      <li><a href="https://github.com/Kuadrant/mcp-gateway">Kuadrant/mcp-gateway</a>, tool-call audit log in <code>internal/mcp-router/ext_proc_adapter.go</code>, OTLP export in <code>internal/otel/logging.go</code>, read at commit f77d958</li>
+      <li><a href="https://github.com/microsoft/agent-governance-toolkit">microsoft/agent-governance-toolkit</a>, <code>agentmesh/governance/audit.py</code> (Merkle tree), <code>agentmesh/governance/trace_sink.py</code> (no transparency log anchoring), read at commit e7f5d2b</li>
+      <li><a href="https://github.com/NVIDIA/OpenShell">NVIDIA/OpenShell</a>, crate <code>openshell-ocsf</code>; <a href="https://schema.ocsf.io/">OCSF schema</a></li>
+      <li><a href="https://developers.redhat.com/articles/2026/09/16/constraining-ai-agents-with-red-hat-ai-containment-identity-and-governance">Constraining AI agents with Red Hat AI</a>, Red Hat Developer, 16 September 2026, for MLflow as the audit trail a reviewer pulls</li>
+      <li><a href="https://artificialintelligenceact.eu/article/26/">EU AI Act, Article 26(6)</a>, log retention of at least six months</li>
+      <li><a href="https://docs.sigstore.dev/logging/overview/">Sigstore Rekor</a>; <a href="https://datatracker.ietf.org/wg/scitt/about/">IETF SCITT working group</a>; RFC 3161, time-stamp protocol</li>
+    </ol>
+    <p>Independent work, not affiliated with the CNCF, Red Hat, NVIDIA or Microsoft. Product names belong to their owners. Views are my own and do not represent the position of my employer.</p>
+  </div>
+
+</div>
+
+</body>
+</html>
